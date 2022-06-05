@@ -116,7 +116,16 @@ class Valoria {
         self.conns[url] = new WebSocket(wsUrl);
         self.conns[url].Url = url;
         self.conns[url].onopen = async () => {
-          await self.setupWS(self.conns[url]);
+          await new Promise(async (res, rej) => {
+            await self.setupWS(self.conns[url]);
+            self.promises["Url verified with " + url] = {res, rej};
+            self.conns[url].send(JSON.stringify({
+              event: "Verify url request",
+              data: {
+                url: self.url
+              }
+            }))
+          })
           self.conns[url].connected = true;
           return res(self.conns[url]);
         }
@@ -135,6 +144,17 @@ class Valoria {
   setupWS = async (ws) => {
     const self = this;
     return new Promise(async (res, rej) => {
+
+      if(!ws) return rej();
+        ws.id = Buffer.from(crypto.randomBytes(32)).toString('hex');
+        ws.on('close', async () => {
+          delete self.conns[url];
+          //DELETE URL EXISTANCE IN ACTIVE NETWORK
+        })
+        ws.on('message', async (d) => {
+          d = JSON.parse(d);
+          
+        });
       res();
     })
   }
@@ -159,5 +179,9 @@ Valoria.runLocalNet = async (count=9) => {
     let valoria = new Valoria(3000 + i);
   }
 }
+
+require('./events/events')(Valoria);
+
+console.log(Valoria);
 
 module.exports = Valoria;
