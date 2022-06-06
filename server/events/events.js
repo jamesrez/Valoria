@@ -1,20 +1,22 @@
 const crypto = require('crypto');
 const subtle = crypto.webcrypto.subtle;
+const axios = require('axios');
 
-module.exports = (Valoria) => {
+module.exports = (valoria) => {
 
-  const self = Valoria;
+  const self = valoria;
   const events = {
     "Verify url request": verifyUrlRequest,
     "Verify url with key": verifyUrlWithKey,
     "Verify url": verifyUrl,
-    "Url Verified": urlVerified,
+    "Url verified": urlVerified,
     "Get groups": getGroups,
     "Got groups": gotGroups,
   }
 
   async function verifyUrlRequest(ws, data){
     return new Promise(async( res, rej) => {
+      console.log(data);
       try {
         if(!data.url) return res();
         ws.verifyingUrl = data.url;
@@ -30,6 +32,7 @@ module.exports = (Valoria) => {
         })
         res();
       } catch(e){
+        console.log(e)
         // rej();
         res();
       }
@@ -38,6 +41,7 @@ module.exports = (Valoria) => {
 
   async function verifyUrlWithKey(ws, data){
     return new Promise(async( res, rej) => {
+      console.log(self.url + " VERIFY URL WITH KEY " + data.key)
       try {
         if(!self.promises["Url verified with " + ws.Url] || !data.key) return res();
         let pathUrl = ws.Url.replace(/\//g, "");
@@ -46,7 +50,7 @@ module.exports = (Valoria) => {
         self.verificationKeys["/valoria/verifying/" + pathUrl] = {
           key: data.key,
           // sig,
-          id: self.id
+          // id: self.id
         };
         self.app.get("/valoria/verifying/" + pathUrl, (req, res) => {
           res.send(self.verificationKeys[req.path]);
@@ -115,7 +119,10 @@ module.exports = (Valoria) => {
   }
   
   async function getGroups(ws, data){
-    ws.send("Got groups", self.groups);
+    ws.send(JSON.stringify({
+      event: "Got groups",
+      data: self.groups
+    }));
   }
   
   async function gotGroups(ws, data){
@@ -124,6 +131,6 @@ module.exports = (Valoria) => {
     delete self.promises["Got groups from " + ws.Url]
   }
 
-  Valoria.events = events;
-  return Valoria;
+  valoria.events = events;
+  return valoria;
 }
