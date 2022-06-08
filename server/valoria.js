@@ -90,19 +90,16 @@ class Valoria {
     const self = this;
     return new Promise(async (res, rej) => {
       const servers = JSON.parse(JSON.stringify(self.servers));
-      console.log(servers);
       if(servers.indexOf(self.url) !== -1) servers.splice(servers.indexOf(self.url), 1);
       const askCount = 10;
       let asked = 0;
       while(asked < askCount && servers.length > 0){
         const i = servers.length * Math.random << 0;
         const url = servers[i];
-        console.log(self.url + " asking " + url + " for groups");
         try {
           const groups = await self.send(url, {event: "Get groups"});
           self.groups = groups || self.groups;
         } catch(e){
-
         } 
         servers.splice(i, 1);
         asked += 1;
@@ -114,8 +111,30 @@ class Valoria {
   joinNetwork = async () => {
     const self = this;
     return new Promise(async (res, rej) => {
+      if(self.group?.joined) return res()
       await self.loadNetwork();
-      console.log("NETWORK LOADED. READY TO JOIN");
+      const groups = JSON.parse(JSON.stringify(self.groups));
+      while(groups.length > 0){
+        const i = groups.length * Math.random() << 0;
+        const url = groups[i][groups[i].length * Math.random() << 0];
+        try {
+          const group = await self.send(url, {event: "Join group"});
+          self.group = group;
+          self.group.joined = true;
+          self.groups[group.index] = self.group.members;
+          console.log(self.groups);
+          return res();
+        } catch(e){
+          // console.log(e);
+        }
+        groups.splice(i, 1);
+      }
+      try {
+        await self.createGroup();
+      } catch(e){
+        // await self.joinNetwork();
+        console.log("COULD NOT CREATE NEW GROUP >:(")
+      }
       console.log(self.groups);
       return res();
     })
@@ -133,7 +152,6 @@ class Valoria {
         self.conns[url] = new WebSocket(wsUrl);
         self.conns[url].Url = url;
         self.conns[url].onopen = async () => {
-          console.log(self.url + " has started connection with " + url);
           await new Promise(async (res, rej) => {
             await self.setupWS(self.conns[url]);
             self.promises["Url verified with " + url] = {res, rej};
@@ -144,7 +162,6 @@ class Valoria {
               }
             }))
           })
-          console.log("VERIFIED URL ;)")
           self.conns[url].connected = true;
           return res(self.conns[url]);
         }
@@ -185,12 +202,37 @@ class Valoria {
     return new Promise(async (res, rej) => {
       try {
         if(!self.conns[url]) await self.connect(url);
-        self.promises["Got groups from " + url] = {res, rej};
+        self.promises[msg.event + " from " + url] = {res, rej};
         self.conns[url].send(JSON.stringify(msg));
       } catch(e){
-        console.log(e);
-        console.log("COULD NOT SEND MESSAGE TO " + url);
         rej(e);
+      }
+    })
+  }
+
+  createGroup = async () => {
+    const self = this;
+    return new Promise(async (res, rej) => {
+      if(self.group?.joined) return res();
+      const i = self.groups.length;
+      self.group = {
+        index: i,
+        members: [self.url],
+        max: 3
+      }
+      self.groups.push(self.group.members)
+      if(self.groups[i-1]){
+        const url = self.groups[i-1][self.groups[i-1].length * Math.random() << 0];
+        try {
+          await self.send(url, {event: "Create group", data: self.group});
+          self.group.joined = true;
+          return res();
+        } catch(e){
+          return rej();
+        }
+      } else {
+        self.group.joined = true;
+        return res();
       }
     })
   }

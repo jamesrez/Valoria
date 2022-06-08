@@ -12,11 +12,16 @@ module.exports = (valoria) => {
     "Url verified": urlVerified,
     "Get groups": getGroups,
     "Got groups": gotGroups,
+    "Get group": getGroup,
+    "Got group": gotGroup,
+    "Create group": createGroup,
+    "Created group": createGroup,
+    "Join group": joinGroup,
+    "Joined group": joinedGroup
   }
 
   async function verifyUrlRequest(ws, data){
     return new Promise(async( res, rej) => {
-      console.log(data);
       try {
         if(!data.url) return res();
         ws.verifyingUrl = data.url;
@@ -32,7 +37,7 @@ module.exports = (valoria) => {
         })
         res();
       } catch(e){
-        console.log(e)
+        // console.log(e)
         // rej();
         res();
       }
@@ -41,7 +46,6 @@ module.exports = (valoria) => {
 
   async function verifyUrlWithKey(ws, data){
     return new Promise(async( res, rej) => {
-      console.log(self.url + " VERIFY URL WITH KEY " + data.key)
       try {
         if(!self.promises["Url verified with " + ws.Url] || !data.key) return res();
         let pathUrl = ws.Url.replace(/\//g, "");
@@ -93,7 +97,6 @@ module.exports = (valoria) => {
           }))
         }
       } catch(e){
-        console.log(e)
         ws.send(JSON.stringify({
           event: "Url verified",
           data: {
@@ -126,10 +129,92 @@ module.exports = (valoria) => {
   }
   
   async function gotGroups(ws, data){
-    if(!self.promises["Got groups from " + ws.Url]) return;
-    self.promises["Got groups from " + ws.Url].res(data)
-    delete self.promises["Got groups from " + ws.Url]
+    if(!self.promises["Get groups from " + ws.Url]) return;
+    self.promises["Get groups from " + ws.Url].res(data)
+    delete self.promises["Get groups from " + ws.Url]
   }
+
+  async function getGroup(ws, data){
+    ws.send(JSON.stringify({
+      event: "Got group",
+      data: self.group
+    }));
+  }
+  
+  async function gotGroup(ws, data){
+    if(!self.promises["Get group from " + ws.Url]) return;
+    self.promises["Get group from " + ws.Url].res(data)
+    delete self.promises["Get group from " + ws.Url]
+  }
+
+  async function createGroup(ws, data){
+    if(self.groups[data.index]?.length > 0) return err();
+    for(let i=0;i<self.group?.members?.length;i++){
+      const groups = await self.send(self.group?.members[i], {event: "Get groups"});
+      if(groups?.length !== data.index){
+        return err();
+      }
+    }
+    ws.send(JSON.stringify({
+      event: "Created group",
+      data: {success: true}
+    }))
+    //TODO: ADD GROUP TO NETWORK
+    return;
+    function err(){
+      ws.send(JSON.stringify({
+        event: "Created group",
+        data: {err: true}
+      }))
+    }
+  }
+
+  async function createdGroup(ws, data){
+    if(!self.promises["Create group from " + ws.Url]) return res();
+    if(data.success){
+      self.promises["Create group from " + ws.Url].res()
+    } else {
+      self.promises["Create group from " + ws.Url].rej();
+    }
+    delete self.promises["Create group from " + ws.Url];
+  }
+
+  async function joinGroup(ws, data){
+    if(!self.group?.joined || self.group.members?.length >= self.group.max) return err();
+    for(let i=0;i<self.group?.members?.length;i++){
+      const group = await self.send(self.group?.members[i], {event: "Get group"});
+      if(group?.members.length >= group.max){
+        return err();
+      }
+    }
+    self.group.members.push(ws.Url);
+    self.groups[self.group.index] = self.group.members;
+    ws.send(JSON.stringify({
+      event: "Joined group",
+      data: {success: true, group: self.group}
+    }))
+    //TODO: ADD MEMBER TO GROUP, Tell other members
+    return;
+    function err(){
+      ws.send(JSON.stringify({
+        event: "Joined group",
+        data: {err: true}
+      }))
+    }
+  }
+
+  async function joinedGroup(ws, data){
+    if(!self.promises["Join group from " + ws.Url]) return res();
+    if(data.success){
+      self.promises["Join group from " + ws.Url].res(data.group)
+    } else {
+      self.promises["Join group from " + ws.Url].rej();
+    }
+    delete self.promises["Join group from " + ws.Url];
+  }
+
+
+
 
   valoria.events = events;
   return valoria;
