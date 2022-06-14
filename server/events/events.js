@@ -150,29 +150,28 @@ module.exports = (valoria) => {
 
   async function createGroup(ws, data){
     if(self.groups[data.index]?.length > 0 || !self.group) return err();
-    for(let i=0;i<self.group?.members?.length;i++){
-      try {
-        const groups = await self.send(self.group?.members[i], {event: "Get groups"});
-        if(groups?.length !== data.index){
-          return err();
+    if(data.members.indexOf(ws.Url) !== -1 && data.index == self.group.index + 1){
+      for(let i=0;i<self.group?.members?.length;i++){
+        try {
+          const groups = await self.send(self.group?.members[i], {event: "Get groups"});
+          if(groups?.length !== data.index){
+            return err();
+          }
+        } catch(e){
+  
         }
-      } catch(e){
-
       }
-    }
-    self.groups.push(data.members);
-    if(data.members.indexOf(ws.Url) !== -1){
       ws.send(JSON.stringify({
         event: "Created group",
         data: {success: true}
       }))
     }
-    if(self.groups[self.group.index + 1]?.indexOf(ws.Url) !== -1){
+    if(self.groups[self.group.index + 1] && self.groups[self.group.index + 1]?.indexOf(ws.Url) !== -1){
       const i = self.groups[self.group.index + 1]?.length * Math.random() << 0;
       const url = self.groups[self.group.index + 1][i];
       self.send(url, {event: "Create group", data})
     }
-    if(self.groups[self.group.index - 1]?.indexOf(ws.Url) !== -1){
+    if(self.groups[self.group.index - 1] && self.groups[self.group.index - 1]?.indexOf(ws.Url) !== -1){
       const i = self.groups[self.group.index - 1]?.length * Math.random() << 0;
       const url = self.groups[self.group.index + 1][i];
       self.send(url, {event: "Create group", data})
@@ -183,6 +182,7 @@ module.exports = (valoria) => {
         self.send(self.group.members[i], {event: "Create group", data})
       }
     }
+    self.groups.push(data.members);
     function err(){
       ws.send(JSON.stringify({
         event: "Created group",
@@ -202,8 +202,13 @@ module.exports = (valoria) => {
   }
 
   async function joinGroup(ws, data){
-    if(!self.group?.joined || !self.groups[data.index] || self.groups[data.index].indexOf(data.url) !== - 1) return err();
-    if(data.url == ws.Url && data.index == self.group.index){
+    console.log("Handle join group for " + data.url);
+    console.log(self.group?.joined);
+    console.log(self.groups[data.index]);
+    if(!self.group?.joined) return err();
+    let index = data.index;
+    if(data.url == ws.Url){
+      index = self.group.index;
       if(self.group.members?.length >= self.group.max) return err();
       for(let i=0;i<self.group?.members?.length;i++){
         if(self.group.members[i] == self.url) continue;
@@ -226,37 +231,39 @@ module.exports = (valoria) => {
       }));
       for(let i=0;i<self.group.members.length;i++){
         if(self.group.members[i] == self.url || self.group.members[i] == data.url) continue;
-        self.send(self.group.members[i], {event: "Join group", data})
+        self.send(self.group.members[i], {event: "Join group", data: {url: data.url, index}})
       }
       if(self.groups[self.group.index - 1]){
         const g = self.groups[self.group.index - 1];
         const url = g[g.length * Math.random() << 0];
-        self.send(url, {event: "Join group", data})
+        self.send(url, {event: "Join group", data: {url: data.url, index}})
       }
-      if(self.groups[self.group.index + 1]){
+      if(self.groups[self.group.index + 1] && self.group.index + 1 !== index){
         const g = self.groups[self.group.index + 1];
         const url = g[g.length * Math.random() << 0];
-        self.send(url, {event: "Join group", data})
+        self.send(url, {event: "Join group", data: {url: data.url, index}})
       }
     } else {
       if(self.group.members.indexOf(data.url) == -1 && self.group.index == data.index && self.group.members.length < self.group.max){
         self.group.members.push(data.url);
-        self.groups[self.group.index] = self.group.members;
       }
-      if(self.groups[self.group.index - 1]?.indexOf(data.url) == -1){
-        self.groups[data.index].push(data.url)
-        if(self.groups[self.group.index + 1]){
-          const g = self.groups[self.group.index + 1];
-          const url = g[g.length * Math.random() << 0];
-          self.send(url, {event: "Join group", data})
-        }
+      if(self.groups[data.index].indexOf(data.url) == -1){
+        self.groups[data.index].push(data.url);
       }
-      if(self.groups[self.group.index + 1]?.indexOf(data.url) == -1){
-        self.groups[data.index].push(data.url)
-        if(self.groups[self.group.index - 1]){
-          const g = self.groups[self.group.index - 1];
-          const url = g[g.length * Math.random() << 0];
-          self.send(url, {event: "Join group", data})
+      if(self.groups[self.group.index + 1] && data.index !== self.group.index + 1){
+        const g = self.groups[self.group.index + 1];
+        const url = g[g.length * Math.random() << 0];
+        self.send(url, {event: "Join group", data})
+      }
+      if(self.groups[self.group.index - 1] && data.index !== self.group.index - 1){
+        const g = self.groups[self.group.index - 1];
+        const url = g[g.length * Math.random() << 0];
+        self.send(url, {event: "Join group", data})
+      }
+      if(self.group.members.indexOf(ws.Url) == -1){
+        for(let i=0;i<self.group.members.length;i++){
+          if(self.group.members[i] == self.url || self.group.members[i] == data.url) continue;
+          self.send(self.group.members[i], {event: "Join group", data})
         }
       }
     }
@@ -274,7 +281,7 @@ module.exports = (valoria) => {
     if(data.success){
       self.promises["Join group from " + ws.Url].res(data.group)
     } else {
-      self.promises["Join group from " + ws.Url].rej();
+      self.promises["Join group from " + ws.Url].rej("Could not join group");
     }
     delete self.promises["Join group from " + ws.Url];
   }

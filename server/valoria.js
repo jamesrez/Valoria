@@ -123,13 +123,13 @@ class Valoria {
       } catch(e){
         return rej(e);
       }
-
       const groups = JSON.parse(JSON.stringify(self.groups));
       while(groups.length > 0){
         const i = groups.length * Math.random() << 0;
         const url = groups[i][groups[i].length * Math.random() << 0];
+        console.log("Asking " + url + " for group " + i);
         try {
-          const group = await self.send(url, {event: "Join group", data: {url: self.url, index: i}});
+          const group = await self.send(url, {event: "Join group", data: {url: self.url}});
           self.group = group;
           self.group.joined = true;
           self.groups[group.index] = self.group.members;
@@ -139,10 +139,10 @@ class Valoria {
         }
         groups.splice(i, 1);
       }
-
       try {
         await self.createGroup();
       } catch(e){
+        console.log(e)
         await self.joinNetwork();
       }
       return res();
