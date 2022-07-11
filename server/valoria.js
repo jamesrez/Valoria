@@ -81,7 +81,7 @@ class Valoria {
         let pathUrl = self.url.replace(/\//g, "");
         self.pathUrl = pathUrl.replace(/\:/g, "");
         self.path = `${__dirname}/data/servers/${self.pathUrl}/`;
-        await self.joinNetwork();
+        // await self.joinNetwork();
         console.log("Valoria setup on " + self.url);
         return res();
       } catch(e){
@@ -152,7 +152,7 @@ class Valoria {
   connect = async (url) => {
     const self = this;
     return new Promise(async (res, rej) => {
-      if(self.conns[url]?.readyState == WebSocket.OPEN && self.conns[url?.connected]) return res(self.conns[url])
+      if(self.conns[url]?.readyState == WebSocket.OPEN && self.conns[url].connected) return res(self.conns[url])
       let wsUrl = "ws://" + new URL(url).host + "/"
       if(url.startsWith('https')){
         wsUrl = "wss://" + new URL(url).host + "/"
@@ -199,8 +199,7 @@ class Valoria {
       if(!ws) return rej();
       ws.id = Buffer.from(crypto.randomBytes(32)).toString('hex');
       ws.on('close', async () => {
-        delete self.conns[url];
-        //DELETE URL EXISTANCE IN ACTIVE NETWORK
+        delete self.conns[ws.id];
       })
       ws.on('message', async (d) => {
         d = JSON.parse(d);
@@ -219,7 +218,7 @@ class Valoria {
           if(self.events[d.event]) self.events[d.event]({send: (msg) => {}, Url: self.url}, d.data);
           return res();
         }
-        if(!self.conns[url]) await self.connect(url);
+        if(!self.conns[url] || !self.conns[url].connected) await self.connect(url);
         self.promises[msg.event + " from " + url] = {res, rej};
         self.conns[url].send(JSON.stringify(msg));
       } catch(e){
@@ -269,11 +268,16 @@ Valoria.runLocalNet = async (count=9) => {
     }
   }
 
-  setInterval(() => {
-    for(let i=0;i<count;i++){
-      console.log(servers[i].groups);
-    }
-  }, 1000)
+  // setInterval(() => {
+  //   let inSync = true;
+  //   let groups;
+  //   for(let i=0;i<count;i++){
+  //     if(!groups) groups = servers[i].groups;
+  //     if(JSON.stringify(groups) !== JSON.stringify(servers[i].groups)) inSync = false;
+  //   }
+  //   console.log(`Local network is ${inSync ? "" : "NOT "}in sync`);
+  //   console.log(groups);
+  // }, 1000)
   
 }
 
