@@ -74,20 +74,6 @@ class Avatar {
     self.loaded = true;
   }
 
-  setAction = (toAction, timeScale) => {
-    if (toAction != this.activeAction) {
-      this.lastAction = this.activeAction
-      this.activeAction = toAction
-      if (this.lastAction) {
-        this.lastAction.fadeOut(0.2)
-      }
-      this.activeAction.reset()
-      this.activeAction.fadeIn(0.2)
-      this.activeAction.play()
-      this.activeAction.timeScale = timeScale || this.activeAction.timeScale
-    }
-  }
-
   update = (delta) => {
     if(!this.loaded) return;
     this.camera.dirTarget.position.set(
@@ -133,15 +119,15 @@ class Avatar {
     position.copy(this.target).add(offset)
     let isMoving = this.avatar.move.forward !== 0 || this.avatar.move.left !== 0
     if (this.avatar.jump) {
-      this.setAction(this.avatar.animationActions[2], 1)
+      this.avatar.setAction("Jump")
     } else if (!this.avatar.jump) {
       if (isMoving) {
-        this.setAction(this.avatar.animationActions[3], 1)
+        this.avatar.setAction("Run")
       } else {
         if (this.avatar.dancing) {
-          this.setAction(this.avatar.animationActions[0], 1)
+          this.avatar.setAction("Dance")
         } else {
-          this.setAction(this.avatar.animationActions[1], 1)
+          this.avatar.setAction("Idle")
         }
       }
     }

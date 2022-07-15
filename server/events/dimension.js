@@ -7,7 +7,25 @@ module.exports = (valoria) => {
   }
 
   async function joinDimension (ws, data){
-    console.log(ws.id + " is joining " + data.dimension);
+    return new Promise(async (res, rej) => {
+      console.log(ws.id + " is joining " + data.dimension);
+      if(!self.dimensions[data.dimension]) self.dimensions[data.dimension] = {
+        peers: {},
+      };
+      const peerList = Object.keys(self.dimensions[data.dimension].peers);
+      if(!self.dimensions[data.dimension].peers[ws.id]){
+        self.dimensions[data.dimension].peers[ws.id] = {};
+      }
+      ws.dimension = data.dimension;
+      ws.send(JSON.stringify({
+        event: "Joined dimension",
+        data: {
+          dimension: data.dimension,
+          peers: peerList
+        }
+      }))
+    })
+
   }
 
   return dimEvents;

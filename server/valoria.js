@@ -18,6 +18,7 @@ class Valoria {
     this.dimensions = {};
     this.accounts = {};
     this.conns = {};
+    this.peers = {};
     this.promises = {};
     this.verifying = {};
     this.verificationKeys = {};
@@ -198,8 +199,15 @@ class Valoria {
     return new Promise(async (res, rej) => {
       if(!ws) return rej();
       ws.id = Buffer.from(crypto.randomBytes(32)).toString('hex');
+      self.conns[ws.id] = ws;
       ws.on('close', async () => {
         delete self.conns[ws.id];
+        if(ws.dimension && self.dimensions[ws.dimension]?.peers[ws.id]){
+          delete self.dimensions[ws.dimension]?.peers[ws.id];
+          if(Object.keys(self.dimensions[ws.dimension].peers).length == 0){
+            delete self.dimensions[ws.dimension];
+          }
+        }
       })
       ws.on('message', async (d) => {
         d = JSON.parse(d);

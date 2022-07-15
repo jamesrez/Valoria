@@ -18,6 +18,8 @@ module.exports = (valoria) => {
     "Created group": createdGroup,
     "Join group": joinGroup,
     "Joined group": joinedGroup,
+    "Send ice candidate": sendIceCandidate,
+    "Send rtc description": sendRTCDescription,
     ...require('./dimension')(valoria)
   }
 
@@ -264,6 +266,42 @@ module.exports = (valoria) => {
       self.promises["Join group from " + ws.Url].rej("Could not join group");
     }
     delete self.promises["Join group from " + ws.Url];
+  }
+
+  async function sendIceCandidate(ws, data){
+    if(self.conns[data.id] && data.candidate){
+      self.conns[data.id].send(JSON.stringify({
+        event: "Got ice candidate",
+        data: {
+          candidate: data.candidate,
+          id: ws.id
+        }
+      }))
+    }
+  }
+
+  async function sendRTCDescription(ws, data){
+    if(self.conns[data.id] && data.description){
+      try {
+        if(!self.conns[data.id]?.peers) self.conns[data.id].peers = {};
+        if(!self.conns[ws.id]?.peers) self.conns[ws.id].peers = {};
+        if(!self.conns[ws.id].peers[data.id] || !self.conns[data.id].peers[ws.id]){
+          self.conns[ws.id].peers[data.id] = {polite: false};
+          self.conns[data.id].peers[ws.id] = {polite: true};
+        }
+        self.conns[data.id].send(JSON.stringify({
+          event: "Got rtc description",
+          data: {
+            description: data.description,
+            id: ws.id,
+            polite: self.conns[ws.id]?.peers[data.id]?.polite,
+            dimension: ws.dimension
+          }
+        }))
+      } catch(e){
+        console.log(e)
+      } 
+    }
   }
 
   valoria.events = events;
