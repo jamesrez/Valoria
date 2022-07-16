@@ -38,7 +38,6 @@ class Valoria {
       this.mainUrl = "https://www.valoria.net/"
     }
     this.events = valoriaEvents;
-    console.log(this.events);
   }
 
   load = async () => {
@@ -78,8 +77,10 @@ class Valoria {
 
     this.dimension = new Dimension(this);
     this.avatar = new Avatar(this);
-    await this.dimension.load();
+    this.avatar.enabled = false;
     await this.avatar.load();
+    await this.dimension.load();
+    this.avatar.enabled = true;
   }
 
   loadModel = async (url, opts={clone: false}) => {
@@ -148,16 +149,20 @@ class Valoria {
 
   connect = async (url) => {
     return new Promise(async (res, rej) => {
-      if(this.conns[url]?.connected) return res(this.conns[url]);
-      let wsUrl = "ws://" + new URL(url).host + "/"
-      if(url.startsWith('https')){
-        wsUrl = "wss://" + new URL(url).host + "/"
-      }
-      this.conns[url] = new WebSocket(wsUrl)
-      this.conns[url].onopen = async () => {
-        await this.setupWS(this.conns[url]);
-        this.conns[url].connected = true;
-        return res(this.conns[url])
+      try {
+        if(this.conns[url]?.connected) return res(this.conns[url]);
+        let wsUrl = "ws://" + new URL(url).host + "/"
+        if(url.startsWith('https')){
+          wsUrl = "wss://" + new URL(url).host + "/"
+        }
+        this.conns[url] = new WebSocket(wsUrl)
+        this.conns[url].onopen = async () => {
+          await this.setupWS(this.conns[url]);
+          this.conns[url].connected = true;
+          return res(this.conns[url])
+        }
+      } catch(e){
+        return rej(e);
       }
     })
   }
@@ -248,8 +253,8 @@ class Valoria {
 }
 
 
+let valoria = new Valoria();
 (async () => {
-  let valoria = new Valoria();
   await valoria.load();
   window.valoria = valoria;
 })();

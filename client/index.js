@@ -1,10 +1,10 @@
 _import([
-  'modules/three.js', 
-  'modules/three-gltf.js',
-  "modules/avatar.js",
-  "modules/dimension.js",
-  "modules/events.js",
-  "modules/valoria.js",
+  './modules/three.js', 
+  './modules/three-gltf.js',
+  "./modules/avatar.js",
+  "./modules/dimension.js",
+  "./modules/events.js",
+  "./modules/valoria.js",
 ]);
 
 async function _import(urls){

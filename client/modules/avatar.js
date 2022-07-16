@@ -1,5 +1,5 @@
 class Avatar {
-  constructor(valoria, url="assets/sophia.glb") { 
+  constructor(valoria, url="valoria/sophia.glb") { 
     this.valoria = valoria;
     this.url = url;
     this.camera = valoria.camera;
@@ -13,22 +13,17 @@ class Avatar {
     this.rotateStart = null
     this.rotateEnd = new THREE.Vector2()
     this.rotateDelta = new THREE.Vector2()
-    this.enabled = false
     this.ranOnce = false
     this.activeAction
     this.lastAction
     this.domElement.onclick = () => {
         this.domElement.requestPointerLock()
     }
+    this.enabled = true;
     const self = this;
     document.onpointerlockchange = (event) => {
       // console.log(this.domElement.pointerLockElement);
-      if (document.pointerLockElement) {
-          self.enabled = true
-      } else {
-          self.enabled = false
-          self.ranOnce = false
-      }
+      if (!document.pointerLockElement) self.ranOnce = false
     }
 
     document.addEventListener('keydown', this.handleKeyDown);
@@ -37,7 +32,7 @@ class Avatar {
 
   load = async () => {
     const self = this;
-    this.avatar = await this.valoria.loadModel(this.url)
+    this.avatar = await this.valoria.loadModel(valoria.mainUrl + this.url);
     this.avatar.position.set(0, 0, 5);
     this.avatar.move = { forward: 0, left: 0 }
     this.avatar.lastMove = {};
@@ -75,7 +70,7 @@ class Avatar {
   }
 
   update = (delta) => {
-    if(!this.loaded) return;
+    if(!this.loaded || !this.enabled) return;
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.avatar.move.left * 10,
       this.camera.position.y,

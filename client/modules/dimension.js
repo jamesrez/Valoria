@@ -4,32 +4,38 @@ class Dimension {
   constructor(valoria, name="Valoria"){
     this.valoria = valoria;
     this.name = "Valoria";
-    this.map = {
-      "../assets/japan.glb": { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} }
-    };
-    this.playerModel = "../assets/sophia.glb";
+    this.map = {};
+    this.map[`${this.valoria.mainUrl}valoria/japan.glb`] = { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} };
+    this.playerModel = "../valoria/sophia.glb";
     this.players = {};
   }
 
   load = async () => {
-    const mList = Object.keys(this.map);
-    for(let i=0;i<mList.length;i++){
-      const map = this.map[mList[i]];
-      const model = await this.valoria.loadModel(mList[i]);
-      model.position.set(map.pos.x, map.pos.y, map.pos.z);
-      model.rotation.set(map.rot.x, map.rot.y, map.rot.z);
-    }
-    const url = this.valoria.mainUrl;
-    await this.valoria.connect(url)
-    this.valoria.conns[url].send(JSON.stringify({
-      event: "Join dimension",
-      data: {
-        dimension: this.name
+    return new Promise(async (res, rej) => {
+      const mList = Object.keys(this.map);
+      for(let i=0;i<mList.length;i++){
+        const map = this.map[mList[i]];
+        const model = await this.valoria.loadModel(mList[i]);
+        model.position.set(map.pos.x, map.pos.y, map.pos.z);
+        model.rotation.set(map.rot.x, map.rot.y, map.rot.z);
       }
-    }))
-    setInterval(() => {
-      this.syncPlayers();
-    }, 20);
+      res();
+      try {
+        const url = "https://www.valoria.net/";
+        await this.valoria.connect(url)
+        this.valoria.conns[url].send(JSON.stringify({
+          event: "Join dimension",
+          data: {
+            dimension: this.name
+          }
+        }))
+        setInterval(() => {
+          this.syncPlayers();
+        }, 20);
+      } catch(e){
+  
+      }
+    })
   }
 
   addPlayer = async (id) => {
