@@ -4355,6 +4355,7 @@ const iceServers = [
 class Valoria {
   constructor(){
     this.models = {};
+    this.THREE = THREE;
     this.loader = new THREE.GLTFLoader();
     this.clock = new THREE.Clock();
     this.conns = {};
@@ -4524,7 +4525,6 @@ class Valoria {
           await pc.setLocalDescription();
           if(pc.signalingState !== "have-local-offer") throw 'negotiationneeded not racing with onmessage';
           if(pc.localDescription.type !== "offer") throw 'negotiationneeded SLD worked';
-          console.log(self.conns);
           self.conns[self.mainUrl].send(JSON.stringify({
             event: "Send rtc description",
             data: {
@@ -4533,7 +4533,7 @@ class Valoria {
             }
           }))
         } catch (e) {
-          console.log(e)
+          // console.log(e)
         } finally {
           self.peers[id].makingOffer = false;
         }
@@ -4577,6 +4577,7 @@ class Valoria {
 
 
 let valoria = new Valoria();
+module.exports = valoria;
 (async () => {
   await valoria.load();
   window.valoria = valoria;
