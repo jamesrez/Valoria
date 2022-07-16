@@ -22,15 +22,14 @@ class Avatar {
     this.enabled = true;
     const self = this;
     document.onpointerlockchange = (event) => {
-      // console.log(this.domElement.pointerLockElement);
       if (!document.pointerLockElement) self.ranOnce = false
     }
 
-    document.addEventListener('keydown', this.handleKeyDown);
-    document.addEventListener('keyup', this.handleKeyUp);
+    document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+    document.addEventListener('keyup', (e) => this.handleKeyUp(e));
   }
 
-  load = async () => {
+  async load(){
     const self = this;
     this.avatar = await this.valoria.loadModel(valoria.mainUrl + this.url);
     this.avatar.position.set(0, 0, 5);
@@ -69,7 +68,7 @@ class Avatar {
     self.loaded = true;
   }
 
-  update = (delta) => {
+  update (delta) {
     if(!this.loaded || !this.enabled) return;
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.avatar.move.left * 10,
@@ -85,7 +84,9 @@ class Avatar {
       (JSON.stringify(this.avatar.lastMove) !== JSON.stringify(this.avatar.move) ||
       JSON.stringify(this.camera.lastPosition) !== JSON.stringify(this.camera.position))
     ) {
-      this.camera?.parent?.parent?.attach(this.camera)
+      if(this.camera.parent && this.camera.parent.parent){
+        this.camera.parent.parent.attach(this.camera)
+      }
       this.avatar.lookAt(
           this.avatar.position.x - (pos.x - this.avatar.position.x),
           this.avatar.position.y,
@@ -140,7 +141,7 @@ class Avatar {
     if (!this.enabled && this.ranOnce) return
   }
 
-  handleKeyDown = (e) => {
+  handleKeyDown(e){
     if(e.code == "KeyW"){
       this.avatar.move["forward"] = 1;
     }
@@ -155,7 +156,7 @@ class Avatar {
     }
   }
 
-  handleKeyUp = (e) => {
+  handleKeyUp(e){
     if(e.code == "KeyW"){
       this.avatar.move["forward"] = 0;
     }

@@ -40,7 +40,7 @@ class Valoria {
     this.events = valoriaEvents;
   }
 
-  load = async () => {
+  async load(){
     document.body.style.margin = "0px";
     this.el = document.createElement('div');
     this.el.style.position = "absolute";
@@ -83,7 +83,7 @@ class Valoria {
     this.avatar.enabled = true;
   }
 
-  loadModel = async (url, opts={clone: false}) => {
+  async loadModel(url, opts={clone: false}){
     return new Promise(async (res, rej) => {
       if(!this.models[url] || opts.clone == false){
         this.loader.load(url, (gltf) => {
@@ -135,7 +135,7 @@ class Valoria {
     })
   }
 
-  loadLights = () => {
+  loadLights(){
     const light = new THREE.AmbientLight()
     light.intensity = 1
     light.position.y = 50
@@ -147,10 +147,10 @@ class Valoria {
     this.scene.add(directionalLight)
   }
 
-  connect = async (url) => {
+  async connect(url){
     return new Promise(async (res, rej) => {
       try {
-        if(this.conns[url]?.connected) return res(this.conns[url]);
+        if(this.conns[url] && this.conns[url].connected) return res(this.conns[url]);
         let wsUrl = "ws://" + new URL(url).host + "/"
         if(url.startsWith('https')){
           wsUrl = "wss://" + new URL(url).host + "/"
@@ -167,10 +167,11 @@ class Valoria {
     })
   }
 
-  p2pConnect = async (id) => {
+  async p2pConnect(id){
     const self = this;
     return new Promise(async (res, rej) => {
-      if(self.peers[id]?.conn?.datachannel?.open) return res(self.peers[id].conn);      
+      const peer = self.peers[id];
+      if(peer && peer.dc && peer.dc.open && peer.conn) return res(peer.conn);      
       self.peers[id] = {
         makingOffer: false,
         ignoreOffer: false,
@@ -230,7 +231,7 @@ class Valoria {
     })
   }
 
-  setupWS = async (ws) => {
+  async setupWS(ws){
     const self = this;
     return new Promise(async (res, rej) => {
       ws.valoria = self;
@@ -244,11 +245,6 @@ class Valoria {
       return res();
     })
   }
-
-
-
-
-
 
 }
 

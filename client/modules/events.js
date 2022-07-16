@@ -18,20 +18,19 @@ async function joinedDimension(ws, data){
 
 async function gotIceCandidate(ws, data){
   const self = ws.valoria;
-  if(self.peers[data.id]?.conn){
-    const pc = self.peers[data.id]?.conn;
-    try {
-      await pc.addIceCandidate(data.candidate);
-    } catch (e) {
-      if (!self.peers[data.id]?.ignoreOffer) throw e;
-    }
+  if(!self.peers[data.id] || !self.peers[data.id].conn) return;
+  const pc = self.peers[data.id].conn;
+  try {
+    await pc.addIceCandidate(data.candidate);
+  } catch (e) {
+    if (!self.peers[data.id].ignoreOffer) throw e;
   }
 }
 
 async function gotRTCDescription(ws, data){
   const self = ws.valoria;
   try {
-    if(self.peers[data.id]?.conn?.datachannel?.open) return;    
+    if(self.peers[data.id] && self.peers[data.id].dc && self.peers[data.id].dc.open) return;    
     if(!self.peers[data.id]) self.peers[data.id] = {
       makingOffer: false,
       ignoreOffer: false,
@@ -48,7 +47,7 @@ async function gotRTCDescription(ws, data){
       (pc.signalingState == 'have-local-offer' && self.peers[data.id].srdAnswerPending);
     self.peers[data.id].ignoreOffer =
       description.type == 'offer' && !polite && (self.peers[data.id].makingOffer || !isStable);
-    if (self.peers[data.id]?.ignoreOffer) {
+    if (self.peers[data.id].ignoreOffer) {
       console.log('glare - ignoring offer');
       return;
     }
