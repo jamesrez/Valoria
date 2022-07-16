@@ -30,7 +30,7 @@ class Valoria {
     this.server.listen(this.port, console.log("Valoria running on port " + this.port));
     this.app.enable('trust proxy');
     this.app.use(express.static('./client'));
-    this.app.use(express.use(cors()));
+    this.app.use(cors());
     this.app.get('/', async (req, res) => {
       res.sendFile("index.html", {root: "./client"});
     })
