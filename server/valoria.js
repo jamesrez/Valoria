@@ -32,6 +32,9 @@ class Valoria {
     this.app.get('/', async (req, res) => {
       res.sendFile("index.html", {root: "./client"});
     })
+    this.app.get('/valoria/:path', async (req, res) => {
+      res.sendFile(req.params.path, {root: "./server/assets"});
+    });
     this.wss = new WebSocket.Server({ 
       server: this.server,
       maxPayload: 512 * 1024 * 1024

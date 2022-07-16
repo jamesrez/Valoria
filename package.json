@@ -1,8 +1,8 @@
 {
-  "name": "valoria",
+  "name": "valoria-server",
   "version": "1.0.0",
   "description": "",
-  "main": "client/valoria.js",
+  "main": "client/index.js",
   "engines": {
     "node": ">=16.0.0",
     "npm": ">= 4.4.0"
