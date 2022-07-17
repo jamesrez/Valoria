@@ -1,12 +1,3 @@
-_import([
-  './modules/three.js', 
-  './modules/three-gltf.js',
-  "./modules/avatar.js",
-  "./modules/dimension.js",
-  "./modules/events.js",
-  "./modules/valoria.js",
-]);
-
 async function _import(urls){
   let script = document.createElement('script');
   let loaded = 0;
@@ -16,3 +7,15 @@ async function _import(urls){
   }
   document.body.prepend(script);
 }
+
+(async () => {
+  await _import([
+    './modules/three.js', 
+    './modules/three-gltf.js',
+    "./modules/avatar.js",
+    "./modules/dimension.js",
+    "./modules/events.js",
+    "./modules/valoria.js",
+  ]);
+  valoria.load();
+})()

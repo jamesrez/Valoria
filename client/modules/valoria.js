@@ -27,27 +27,37 @@ const iceServers = [
 
 class Valoria {
   constructor(){
-    this.models = {};
     this.THREE = THREE;
+    this.THREE.Cache.enabled = true;
     this.loader = new THREE.GLTFLoader();
     this.clock = new THREE.Clock();
     this.conns = {};
     this.peers = {};
-    if(window.location.hostname == "localhost"){
-      this.mainUrl = window.location.href;
-    } else {
-      this.mainUrl = "https://www.valoria.net/"
-    }
+    this.updates = {};
+
+    // if(window.location.hostname == "localhost"){
+    //   this.mainUrl = window.location.href;
+    // } else {
+    this.mainUrl = "https://www.valoria.net/"
+    // }
     this.events = valoriaEvents;
   }
 
-  async load(){
-    document.body.style.margin = "0px";
+  async load(opts={}){
+    if(!opts.el) {
+      opts.el = document.body;
+      document.body.style.margin = "0px";
+    }
     this.el = document.createElement('div');
     this.el.style.position = "absolute";
     this.el.style.zIndex = "100000000000";
     this.el.style.backgroundColor = "black";
-    document.body.appendChild(this.el);
+    this.el.style.top = "0px";
+    this.el.style.left = "0px";
+    this.el.style.overflowY = "hidden";
+    this.el.style.width = "100%";
+    this.el.style.height = "100%";
+    opts.el.appendChild(this.el);
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
     this.camera.position.set(-3, 2.1, 5);
@@ -67,11 +77,12 @@ class Valoria {
 
     this.renderer.setAnimationLoop(async () => {
       this.renderer.render( this.scene, this.camera );
-      let delta = this.clock.getDelta();
-      this.scene.traverse((node) => {
-        if(node.mixer) node.mixer.update(delta);
-      })
+      const delta = this.clock.getDelta();
       if(this.avatar.update) this.avatar.update(delta);
+      const updates = Object.keys(this.updates);
+      for(let i=0;i<updates.length;i++){
+        if(typeof this.updates[updates[i]] == "function") this.updates[updates[i]](delta);
+      }
     })
 
     this.loadLights();
@@ -84,55 +95,38 @@ class Valoria {
     this.avatar.enabled = true;
   }
 
-  async loadModel(url, opts={clone: false}){
+  async loadModel(url, opts={}){
     return new Promise(async (res, rej) => {
-      if(!this.models[url] || opts.clone == false){
-        this.loader.load(url, (gltf) => {
-          this.scene.add(gltf.scene);
-          gltf.scene.traverse((node) => {
-            if(node.isMesh){
-              node.frustumCulled = false;
-            }
-          })
-          gltf.scene.animations = gltf.animations;
-          gltf.scene.mixer = new THREE.AnimationMixer(gltf.scene);
-          gltf.scene.animationActions = {};
-          for(let i=0;i<gltf.animations.length;i++){
-            const animationAction = gltf.scene.mixer.clipAction(gltf.animations[i])
-            gltf.scene.animationActions[animationAction.getClip().name] = animationAction;
+      this.loader.load(url, (gltf) => {
+        this.scene.add(gltf.scene);
+        gltf.scene.traverse((node) => {
+          if(node.isMesh){
+            node.frustumCulled = false;
           }
-          gltf.scene.setAction = (toActionName, timeScale=1) => {
-            let toAction = gltf.scene.animationActions[toActionName];
-            if (toAction && toAction != gltf.scene.activeAction) {
-              gltf.scene.lastAction = gltf.scene.activeAction
-              gltf.scene.activeAction = toAction
-              if (gltf.scene.lastAction) {
-                gltf.scene.lastAction.fadeOut(0.2)
-              }
-              gltf.scene.activeAction.reset()
-              gltf.scene.activeAction.fadeIn(0.2)
-              gltf.scene.activeAction.play()
-              gltf.scene.activeAction.timeScale = timeScale;
-            }
-          }
-          if(opts.clone){
-            this.models[url] = gltf;
-          }
-          res(gltf.scene);
         })
-      }
-      // if(this.models[url] && opts.clone){
-      //   let model = this.models[url].scene.clone();
-      //   this.scene.add(model);
-      //   model.traverse((node) => {
-      //     if(node.isMesh){
-      //       node.frustumCulled = false;
-      //     }
-      //   })
-      //   model.animations = models[url].animations;
-      //   model.mixer = new THREE.AnimationMixer(model);
-      //   res(model);
-      // }
+        gltf.scene.animations = gltf.animations;
+        gltf.scene.mixer = new THREE.AnimationMixer(gltf.scene);
+        gltf.scene.animationActions = {};
+        for(let i=0;i<gltf.animations.length;i++){
+          const animationAction = gltf.scene.mixer.clipAction(gltf.animations[i])
+          gltf.scene.animationActions[animationAction.getClip().name] = animationAction;
+        }
+        gltf.scene.setAction = (toActionName, timeScale=1) => {
+          let toAction = gltf.scene.animationActions[toActionName];
+          if (toAction && toAction != gltf.scene.activeAction) {
+            gltf.scene.lastAction = gltf.scene.activeAction
+            gltf.scene.activeAction = toAction
+            if (gltf.scene.lastAction) {
+              gltf.scene.lastAction.fadeOut(0.2)
+            }
+            gltf.scene.activeAction.reset()
+            gltf.scene.activeAction.fadeIn(0.2)
+            gltf.scene.activeAction.play()
+            gltf.scene.activeAction.timeScale = timeScale;
+          }
+        }
+        res(gltf.scene);
+      })
     })
   }
 
@@ -215,8 +209,6 @@ class Valoria {
 
       self.peers[id].dc = pc.createDataChannel("data");
       self.peers[id].dc.onopen = function(event) {
-        console.log("datachannel open");
-        console.log(self.peers[id])
         return res(self.peers[id]);
       }
       self.peers[id].dc.onmessage = function(e) {
@@ -250,7 +242,4 @@ class Valoria {
 
 
 let valoria = new Valoria();
-(async () => {
-  await valoria.load();
-  window.valoria = valoria;
-})();
+window.valoria = valoria;

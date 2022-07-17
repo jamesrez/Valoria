@@ -6,7 +6,7 @@ class Dimension {
     this.name = "Valoria";
     this.map = {};
     this.map[`${this.valoria.mainUrl}valoria/japan.glb`] = { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} };
-    this.playerModel = "../valoria/sophia.glb";
+    this.playerModel = `${this.valoria.mainUrl}valoria/sophia.glb`;
     this.players = {};
   }
 
@@ -21,7 +21,7 @@ class Dimension {
       }
       res();
       try {
-        const url = "https://www.valoria.net/";
+        const url = this.valoria.mainUrl
         await this.valoria.connect(url)
         this.valoria.conns[url].send(JSON.stringify({
           event: "Join dimension",
@@ -46,11 +46,15 @@ class Dimension {
     this.valoria.peers[id].subscribed["Move"] = (data) => {
       this.updatePlayer(id, data);
     }
+    this.valoria.updates[`player-${id}`] = (delta) => {
+      if(this.players[id].mixer) this.players[id].mixer.update(delta)
+    }
   }
 
   async removePlayer(id){
     this.players[id].clear();
     delete this.players[id];
+    delete this.valoria.updates[`player-${id}`];
   }
 
   async syncPlayers(){

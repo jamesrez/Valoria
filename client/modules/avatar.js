@@ -70,6 +70,7 @@ class Avatar {
 
   update (delta) {
     if(!this.loaded || !this.enabled) return;
+    if(this.avatar.mixer) this.avatar.mixer.update(delta);
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.avatar.move.left * 10,
       this.camera.position.y,
