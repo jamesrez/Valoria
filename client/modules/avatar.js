@@ -27,6 +27,8 @@ class Avatar {
 
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+
+    this.load();
   }
 
   async load(){
@@ -47,6 +49,7 @@ class Avatar {
       this.camera.position.y,
       this.camera.position.z + 3
     )
+    this.camera.rotation.y = -45 * Math.PI / 2;
     this.domElement.addEventListener('mousemove', (e) => {
       if (!self.enabled || !self.ranOnce) return
       const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0
@@ -66,6 +69,7 @@ class Avatar {
       self.rotateStart.copy(self.rotateEnd)
     })
     self.loaded = true;
+    this.onload();
   }
 
   update (delta) {

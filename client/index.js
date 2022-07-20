@@ -13,9 +13,10 @@ async function _import(urls){
     './modules/three.js', 
     './modules/three-gltf.js',
     "./modules/avatar.js",
-    "./modules/dimension.js",
+    "./modules/world.js",
     "./modules/events.js",
     "./modules/valoria.js",
   ]);
   valoria.load();
+  valoria.world.add("city", "/valoria/city.glb");
 })()

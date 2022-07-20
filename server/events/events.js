@@ -20,7 +20,7 @@ module.exports = (valoria) => {
     "Joined group": joinedGroup,
     "Send ice candidate": sendIceCandidate,
     "Send rtc description": sendRTCDescription,
-    ...require('./dimension')(valoria)
+    ...require('./world')(valoria)
   }
 
   async function verifyUrlRequest(ws, data){
@@ -295,7 +295,7 @@ module.exports = (valoria) => {
             description: data.description,
             id: ws.id,
             polite: self.conns[ws.id]?.peers[data.id]?.polite,
-            dimension: ws.dimension
+            world: ws.world
           }
         }))
       } catch(e){

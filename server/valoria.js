@@ -16,7 +16,7 @@ class Valoria {
     const self = this;
     this.servers = isLocal ? ["http://localhost:3000/", "http://localhost:3001/"] : ["https://www.valoria.live/"]
     this.groups = [];
-    this.dimensions = {};
+    this.worlds = {};
     this.accounts = {};
     this.conns = {};
     this.peers = {};
@@ -207,10 +207,10 @@ class Valoria {
       self.conns[ws.id] = ws;
       ws.on('close', async () => {
         delete self.conns[ws.id];
-        if(ws.dimension && self.dimensions[ws.dimension]?.peers[ws.id]){
-          delete self.dimensions[ws.dimension]?.peers[ws.id];
-          if(Object.keys(self.dimensions[ws.dimension].peers).length == 0){
-            delete self.dimensions[ws.dimension];
+        if(ws.world && self.worlds[ws.world]?.peers[ws.id]){
+          delete self.worlds[ws.world]?.peers[ws.id];
+          if(Object.keys(self.worlds[ws.world].peers).length == 0){
+            delete self.worlds[ws.world];
           }
         }
       })

@@ -3988,6 +3988,8 @@ class Avatar {
 
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+
+    this.load();
   }
 
   async load(){
@@ -4008,6 +4010,7 @@ class Avatar {
       this.camera.position.y,
       this.camera.position.z + 3
     )
+    this.camera.rotation.y = -45 * Math.PI / 2;
     this.domElement.addEventListener('mousemove', (e) => {
       if (!self.enabled || !self.ranOnce) return
       const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0
@@ -4027,6 +4030,7 @@ class Avatar {
       self.rotateStart.copy(self.rotateEnd)
     })
     self.loaded = true;
+    this.onload();
   }
 
   update (delta) {
@@ -4137,34 +4141,58 @@ class Avatar {
 
 
 
-class Dimension {
+class World {
 
   constructor(valoria, name="Valoria"){
     this.valoria = valoria;
     this.name = "Valoria";
-    this.map = {};
-    this.map[`${this.valoria.mainUrl}valoria/japan.glb`] = { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} };
-    this.playerModel = `${this.valoria.mainUrl}valoria/sophia.glb`;
+    this.models = {};
+    // this.map[`${this.valoria.mainUrl}valoria/city.glb`] = { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} };
+    // this.playerModel = `${this.valoria.mainUrl}valoria/sophia.glb`;
     this.players = {};
   }
 
-  async load(){
+  async add(name, url, opts={}){
     return new Promise(async (res, rej) => {
-      const mList = Object.keys(this.map);
-      for(let i=0;i<mList.length;i++){
-        const map = this.map[mList[i]];
-        const model = await this.valoria.loadModel(mList[i]);
-        model.position.set(map.pos.x, map.pos.y, map.pos.z);
-        model.rotation.set(map.rot.x, map.rot.y, map.rot.z);
+      try {
+        if(this.models[name]){
+          throw `${name} has already been added to the world`;
+        }
+        const model = await this.valoria.loadModel(url);
+        this.models[name] = model;
+        if(opts.pos){
+          model.position.set(opts.pos.x || 0, opts.pos.y || 0, opts.pos.z || 0);
+        }
+        if(opts.rot){
+          model.rotation.set(opts.rot.x || 0, opts.rot.y || 0, opts.rot.z || 0);
+        }
+        if(opts.scale){
+          model.scale.set(opts.scale.x || 1, opts.scale.y || 1, opts.scale.z || 1);
+        }
+      } catch(e){
+        return rej(e)
       }
-      res();
+      res(this.models[name]);
+    })
+  }
+
+  async remove(name){
+    return new Promise(async (res, rej) => {
+      this.models[name].clear();
+      delete this.models[name];
+    })
+  }
+
+  async join(){
+    return new Promise(async (res, rej) => {
       try {
         const url = this.valoria.mainUrl
         await this.valoria.connect(url)
         this.valoria.conns[url].send(JSON.stringify({
-          event: "Join dimension",
+          event: "Join world",
           data: {
-            dimension: this.name
+            world: this.name,
+            avatar: this.valoria.avatar.url
           }
         }))
         setInterval(() => {
@@ -4367,11 +4395,11 @@ class Valoria {
     this.peers = {};
     this.updates = {};
 
-    // if(window.location.hostname == "localhost"){
-    //   this.mainUrl = window.location.href;
-    // } else {
-    this.mainUrl = "https://www.valoria.net/"
-    // }
+    if(window.location.hostname == "localhost"){
+      this.mainUrl = window.location.href;
+    } else {
+      this.mainUrl = "https://www.valoria.net/"
+    }
     this.events = valoriaEvents;
   }
 
@@ -4419,12 +4447,29 @@ class Valoria {
 
     this.loadLights();
 
-    this.dimension = new Dimension(this);
+    this.world = new World(this);
     this.avatar = new Avatar(this);
-    this.avatar.enabled = false;
-    await this.avatar.load();
-    await this.dimension.load();
-    this.avatar.enabled = true;
+    this.avatar.onload = () => {
+      this.world.join();
+      this.avatar.enabled = true;
+    }
+  }
+
+  async update(name, fn){
+    try {
+      fn(0.007);
+      this.updates[name] = fn;
+    } catch(e){
+      throw e;
+    }
+  }
+
+  async removeUpdate(name){
+    try {
+      delete this.updates[name]
+    } catch(e){
+
+    }
   }
 
   async loadModel(url, opts={}){
@@ -4434,6 +4479,7 @@ class Valoria {
         gltf.scene.traverse((node) => {
           if(node.isMesh){
             node.frustumCulled = false;
+            node.material.roughness = 1;
           }
         })
         gltf.scene.animations = gltf.animations;
@@ -4549,7 +4595,7 @@ class Valoria {
         if(self.peers[id].subscribed[event]) self.peers[id].subscribed[event](d.data);
       }
       self.peers[id].dc.onclose = () => {
-        if(self.dimension.players[id]) self.dimension.removePlayer(id);
+        if(self.world.players[id]) self.world.removePlayer(id);
       }
 
     })
@@ -4572,7 +4618,5 @@ class Valoria {
 
 }
 
-
 let valoria = new Valoria();
-window.valoria = valoria;
-module.exports=valoria;
+module.exports = valoria;

@@ -35,11 +35,11 @@ class Valoria {
     this.peers = {};
     this.updates = {};
 
-    // if(window.location.hostname == "localhost"){
-    //   this.mainUrl = window.location.href;
-    // } else {
-    this.mainUrl = "https://www.valoria.net/"
-    // }
+    if(window.location.hostname == "localhost"){
+      this.mainUrl = window.location.href;
+    } else {
+      this.mainUrl = "https://www.valoria.net/"
+    }
     this.events = valoriaEvents;
   }
 
@@ -87,12 +87,29 @@ class Valoria {
 
     this.loadLights();
 
-    this.dimension = new Dimension(this);
+    this.world = new World(this);
     this.avatar = new Avatar(this);
-    this.avatar.enabled = false;
-    await this.avatar.load();
-    await this.dimension.load();
-    this.avatar.enabled = true;
+    this.avatar.onload = () => {
+      this.world.join();
+      this.avatar.enabled = true;
+    }
+  }
+
+  async update(name, fn){
+    try {
+      fn(0.007);
+      this.updates[name] = fn;
+    } catch(e){
+      throw e;
+    }
+  }
+
+  async removeUpdate(name){
+    try {
+      delete this.updates[name]
+    } catch(e){
+
+    }
   }
 
   async loadModel(url, opts={}){
@@ -102,6 +119,7 @@ class Valoria {
         gltf.scene.traverse((node) => {
           if(node.isMesh){
             node.frustumCulled = false;
+            node.material.roughness = 1;
           }
         })
         gltf.scene.animations = gltf.animations;
@@ -217,7 +235,7 @@ class Valoria {
         if(self.peers[id].subscribed[event]) self.peers[id].subscribed[event](d.data);
       }
       self.peers[id].dc.onclose = () => {
-        if(self.dimension.players[id]) self.dimension.removePlayer(id);
+        if(self.world.players[id]) self.world.removePlayer(id);
       }
 
     })
