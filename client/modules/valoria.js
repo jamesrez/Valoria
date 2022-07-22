@@ -34,7 +34,11 @@ class Valoria {
     this.conns = {};
     this.peers = {};
     this.updates = {};
-
+    this.isMobile = false;
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent) ||
+       (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.platform))) {
+        this.isMobile = true;
+    }
     if(window.location.hostname == "localhost"){
       this.mainUrl = window.location.href;
     } else {
@@ -49,12 +53,12 @@ class Valoria {
       document.body.style.margin = "0px";
     }
     this.el = document.createElement('div');
-    this.el.style.position = "absolute";
+    this.el.style.position = "relative";
     this.el.style.zIndex = "100000000000";
     this.el.style.backgroundColor = "black";
     this.el.style.top = "0px";
     this.el.style.left = "0px";
-    this.el.style.overflowY = "hidden";
+    this.el.style.overflow = "hidden";
     this.el.style.width = "100%";
     this.el.style.height = "100%";
     opts.el.appendChild(this.el);
@@ -79,17 +83,33 @@ class Valoria {
       this.renderer.render( this.scene, this.camera );
       const delta = this.clock.getDelta();
       if(this.avatar.update) this.avatar.update(delta);
+      if(this.touch && this.touch.update) this.touch.update(delta);
       const updates = Object.keys(this.updates);
       for(let i=0;i<updates.length;i++){
         if(typeof this.updates[updates[i]] == "function") this.updates[updates[i]](delta);
       }
     })
 
-    this.loadLights();
+    this.light = new THREE.AmbientLight()
+    this.light.intensity = 1
+    this.light.position.y = 50
+    this.scene.add(this.light)
 
     this.world = new World(this);
     this.avatar = new Avatar(this);
     this.avatar.onload = () => {
+
+      if(this.isMobile){
+        this.touch = new TouchControls(this, {
+          speedFactor: 0.015,
+          delta: 1,
+          rotationFactor: 0.015,
+          maxPitch: 55,
+          hitTest: false,
+          hitTestDistance: 40,
+        })
+      }
+
       this.world.join();
       this.avatar.enabled = true;
     }
@@ -146,18 +166,6 @@ class Valoria {
         res(gltf.scene);
       })
     })
-  }
-
-  loadLights(){
-    const light = new THREE.AmbientLight()
-    light.intensity = 1
-    light.position.y = 50
-    this.scene.add(light)
-
-    const directionalLight = new THREE.DirectionalLight(0xdd77ff, 1.5)
-    directionalLight.position.y = 10
-    directionalLight.castShadow = true
-    this.scene.add(directionalLight)
   }
 
   async connect(url){

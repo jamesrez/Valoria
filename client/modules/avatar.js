@@ -1,10 +1,14 @@
 class Avatar {
-  constructor(valoria, url="valoria/sophia.glb") { 
+  constructor(valoria) { 
     this.valoria = valoria;
-    this.url = url;
+    this.defaultUrl = valoria.mainUrl + "valoria/sophia.glb";
+    this.url = this.defaultUrl;
     this.camera = valoria.camera;
     this.domElement = valoria.el;
     this.cursor = {}
+    this.loaded = false;
+    this.position = {x: 0, y: 0, z: 0},
+    this.rotation= {x: 0, y: 0, z: 0},
     this.speed = 6
     this.target = new THREE.Vector3()
     this.spherical = new THREE.Spherical()
@@ -24,155 +28,213 @@ class Avatar {
     document.onpointerlockchange = (event) => {
       if (!document.pointerLockElement) self.ranOnce = false
     }
-
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
+  }
 
-    this.load();
+  async set(url){
+    const self = this;
+    return new Promise(async (res, rej) => {
+      if(self.url == url) return res(self.model);
+      try {
+        await fetch(url);
+        if(self.model) {
+          self.camera.parent.parent.attach(self.camera)
+          self.position = self.model.position;
+          self.rotation = self.model.rotation;
+          self.model.clear();
+        }
+        self.loaded = false;
+        self.url = url;
+        await self.load();
+        res(self.model);
+      } catch(e){
+        rej(e);
+      }
+    })
+  }
+
+  async setDefault(){
+    const self = this;
+    return new Promise(async (res, rej) => {
+      if(self.url == self.defaultUrl) return res(self.model);
+      try {
+        if(self.model) {
+          self.camera.parent.parent.attach(self.camera)
+          self.position = self.model.position;
+          self.rotation = self.model.rotation;
+          self.model.clear();
+        }
+        self.loaded = false;
+        self.url = self.defaultUrl
+        await self.load();
+        res(self.model);
+      } catch(e){
+        rej(e);
+      }
+    })
   }
 
   async load(){
     const self = this;
-    this.avatar = await this.valoria.loadModel(valoria.mainUrl + this.url);
-    this.avatar.position.set(0, 0, 5);
-    this.avatar.move = { forward: 0, left: 0 }
-    this.avatar.lastMove = {};
-    this.avatar.dirTarget = new THREE.Object3D()
-    this.avatar.dirTarget.position.copy(this.avatar.position)
-    this.camera.position.set(this.avatar.position.x, 2.5, this.avatar.position.z - 2)
-    this.avatar.attach(this.camera)
-    this.avatar.rotation.y = Math.PI / 2;
-    this.camera.dirTarget = new THREE.Object3D()
-    this.camera.attach(this.camera.dirTarget)
-    this.camera.dirTarget.position.set(
-      this.camera.position.x,
-      this.camera.position.y,
-      this.camera.position.z + 3
-    )
-    this.camera.rotation.y = -45 * Math.PI / 2;
-    this.domElement.addEventListener('mousemove', (e) => {
-      if (!self.enabled || !self.ranOnce) return
-      const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0
-      const movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0
-      if (!self.rotateStart) {
-        self.rotateStart = new THREE.Vector2()
-        self.rotateStart.set(0, 0)
-        return
+    return new Promise(async (res, rej) => {
+      if(self.loaded) return res(self.model);
+      try {
+        self.model = await self.valoria.loadModel(self.url);
+        self.model.position.set(self.position.x, self.position.y, self.position.z);
+        self.model.rotation.set(self.rotation.x, self.rotation.y, self.rotation.z);
+        self.model.move = { forward: 0, left: 0 }
+        self.model.lastMove = {};
+        self.model.dirTarget = new THREE.Object3D()
+        self.model.dirTarget.position.copy(self.model.position)
+        self.camera.position.set(self.model.position.x, 2.5, self.model.position.z - 2)
+        self.model.attach(self.camera)
+        self.model.rotation.y = Math.PI / 2;
+        self.camera.dirTarget = new THREE.Object3D()
+        self.camera.attach(self.camera.dirTarget)
+        self.camera.dirTarget.position.set(
+          self.camera.position.x,
+          self.camera.position.y,
+          self.camera.position.z + 3
+        )
+        self.camera.rotation.y = -45 * Math.PI / 2;
+        self.domElement.addEventListener('mousemove', (e) => {
+          if (!self.enabled || !self.ranOnce) return
+          const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0
+          const movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0
+          if (!self.rotateStart) {
+            self.rotateStart = new THREE.Vector2()
+            self.rotateStart.set(0, 0)
+            return
+          }
+          self.rotateEnd.set(self.rotateStart.x + movementX, self.rotateStart.y + movementY)
+          self.rotateDelta
+            .subVectors(self.rotateEnd, self.rotateStart)
+            .multiplyScalar(self.rotateSpeed)
+          const element = self.domElement
+          self.sphericalDelta.theta -= (2 * Math.PI * self.rotateDelta.x) / element.clientHeight // yes, height
+          self.sphericalDelta.phi -= (2 * Math.PI * self.rotateDelta.y) / element.clientHeight
+          self.rotateStart.copy(self.rotateEnd)
+        })
+        self.loaded = true;
+        self.onload();
+        res(self.model);
+      } catch(e){
+        rej(e);
       }
-      self.rotateEnd.set(self.rotateStart.x + movementX, self.rotateStart.y + movementY)
-      self.rotateDelta
-        .subVectors(self.rotateEnd, self.rotateStart)
-        .multiplyScalar(self.rotateSpeed)
-      const element = self.domElement
-      self.sphericalDelta.theta -= (2 * Math.PI * self.rotateDelta.x) / element.clientHeight // yes, height
-      self.sphericalDelta.phi -= (2 * Math.PI * self.rotateDelta.y) / element.clientHeight
-      self.rotateStart.copy(self.rotateEnd)
     })
-    self.loaded = true;
-    this.onload();
   }
 
   update (delta) {
     if(!this.loaded || !this.enabled) return;
-    if(this.avatar.mixer) this.avatar.mixer.update(delta);
+    if(this.model.mixer) this.model.mixer.update(delta);
     this.camera.dirTarget.position.set(
-      this.camera.position.x + this.avatar.move.left * 10,
+      this.camera.position.x + this.model.move.left * 10,
       this.camera.position.y,
-      this.camera.position.z + this.avatar.move.forward * 20 - 2
+      this.camera.position.z + this.model.move.forward * 20 - 2
     )
     var viewPos = this.camera.dirTarget.position
     var newView = new THREE.Vector3()
     newView.copy(viewPos)
     let pos = this.camera.dirTarget.getWorldPosition(newView)
     if (
-      (this.avatar.move.forward !== 0 || this.avatar.move.left !== 0) &&
-      (JSON.stringify(this.avatar.lastMove) !== JSON.stringify(this.avatar.move) ||
+      (this.model.move.forward !== 0 || this.model.move.left !== 0) &&
+      (JSON.stringify(this.model.lastMove) !== JSON.stringify(this.model.move) ||
       JSON.stringify(this.camera.lastPosition) !== JSON.stringify(this.camera.position))
     ) {
       if(this.camera.parent && this.camera.parent.parent){
         this.camera.parent.parent.attach(this.camera)
       }
-      this.avatar.lookAt(
-          this.avatar.position.x - (pos.x - this.avatar.position.x),
-          this.avatar.position.y,
-          this.avatar.position.z - (pos.z - this.avatar.position.z)
+      this.model.lookAt(
+          this.model.position.x - (pos.x - this.model.position.x),
+          this.model.position.y,
+          this.model.position.z - (pos.z - this.model.position.z)
       )
-      this.avatar.attach(this.camera)
+      this.model.attach(this.camera)
     }
-    const offset = new THREE.Vector3() // so camera.up is the orbit axis
-    const quat = new THREE.Quaternion().setFromUnitVectors(
-        this.camera.up,
-        new THREE.Vector3(0, 1, 0)
-    )
-    const quatInverse = quat.clone().invert()
-    const position = this.camera.position
-    offset.copy(position).sub(this.target) // rotate offset to "y-axis-is-up" space
-    offset.applyQuaternion(quat) // angle from z-axis around y-axis
-    this.spherical.setFromVector3(offset)
-    this.spherical.theta += this.sphericalDelta.theta
-    this.spherical.phi += this.sphericalDelta.phi
-    this.spherical.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, this.spherical.phi)) // restrict phi to be between desired limits
-    this.spherical.makeSafe()
-    this.spherical.radius *= 1 // restrict radius to be between desired limits
-    this.spherical.radius = Math.max(0, Math.min(Infinity, this.spherical.radius)) // move target to panned location
-    offset.setFromSpherical(this.spherical) // rotate offset back to "camera-up-vector-is-up" space
-    offset.applyQuaternion(quatInverse)
-    position.copy(this.target).add(offset)
-    let isMoving = this.avatar.move.forward !== 0 || this.avatar.move.left !== 0
-    if (this.avatar.jump) {
-      this.avatar.setAction("Jump")
-    } else if (!this.avatar.jump) {
+
+    if(!this.isMobile){
+      const offset = new THREE.Vector3() // so camera.up is the orbit axis
+      const quat = new THREE.Quaternion().setFromUnitVectors(
+          this.camera.up,
+          new THREE.Vector3(0, 1, 0)
+      )
+      const quatInverse = quat.clone().invert()
+      const position = this.camera.position
+      offset.copy(position).sub(this.target) // rotate offset to "y-axis-is-up" space
+      offset.applyQuaternion(quat) // angle from z-axis around y-axis
+      this.spherical.setFromVector3(offset)
+      this.spherical.theta += this.sphericalDelta.theta
+      this.spherical.phi += this.sphericalDelta.phi
+      this.spherical.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, this.spherical.phi)) // restrict phi to be between desired limits
+      this.spherical.makeSafe()
+      this.spherical.radius *= 1 // restrict radius to be between desired limits
+      this.spherical.radius = Math.max(0, Math.min(Infinity, this.spherical.radius)) // move target to panned location
+      offset.setFromSpherical(this.spherical) // rotate offset back to "camera-up-vector-is-up" space
+      offset.applyQuaternion(quatInverse)
+      position.copy(this.target).add(offset)
+    }
+    
+    let isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0
+    if (this.model.jump) {
+      this.model.setAction("Jump")
+    } else if (!this.model.jump) {
       if (isMoving) {
-        this.avatar.setAction("Run")
+        this.model.setAction("Run")
       } else {
-        if (this.avatar.dancing) {
-          this.avatar.setAction("Dance")
+        if (this.model.dancing) {
+          this.model.setAction("Dance")
         } else {
-          this.avatar.setAction("Idle")
+          this.model.setAction("Idle")
         }
       }
     }
+
     let velocity = isMoving ? 1 : 0
-    this.avatar.translateZ(velocity * this.speed * delta)
-    this.avatar.lastMove = Object.assign({}, this.avatar.move)
-    this.sphericalDelta.set(0, 0, 0)
-    this.camera.lookAt(
-      this.avatar.position.x,
-      this.avatar.position.y + 1,
-      this.avatar.position.z
-    )
-    this.camera.lastPos = Object.assign({}, this.camera.position)
+    this.model.translateZ(velocity * this.speed * delta)
+    this.model.lastMove = Object.assign({}, this.model.move)
+
+    if(!this.isMobile){
+      this.sphericalDelta.set(0, 0, 0)
+      this.camera.lookAt(
+        this.model.position.x,
+        this.model.position.y + 1,
+        this.model.position.z
+      )
+      this.camera.lastPos = Object.assign({}, this.camera.position)
+    }
+   
     this.ranOnce = true
     if (!this.enabled && this.ranOnce) return
   }
 
   handleKeyDown(e){
     if(e.code == "KeyW"){
-      this.avatar.move["forward"] = 1;
+      this.model.move["forward"] = 1;
     }
     if(e.code == "KeyA"){
-      this.avatar.move["left"] = 1;
+      this.model.move["left"] = 1;
     }
     if(e.code == "KeyS"){
-      this.avatar.move["forward"] = -1;
+      this.model.move["forward"] = -1;
     }
     if(e.code == "KeyD"){
-      this.avatar.move["left"] = -1;
+      this.model.move["left"] = -1;
     }
   }
 
   handleKeyUp(e){
     if(e.code == "KeyW"){
-      this.avatar.move["forward"] = 0;
+      this.model.move["forward"] = 0;
     }
     if(e.code == "KeyA"){
-      this.avatar.move["left"] = 0;
+      this.model.move["left"] = 0;
     }
     if(e.code == "KeyS"){
-      this.avatar.move["forward"] = 0;
+      this.model.move["forward"] = 0;
     }
     if(e.code == "KeyD"){
-      this.avatar.move["left"] = 0;
+      this.model.move["left"] = 0;
     }
   }
 

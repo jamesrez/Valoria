@@ -87,9 +87,9 @@ class World {
     for(let i=0;i<players.length;i++){
       const peer = this.valoria.peers[players[i]];
       if(!peer || !peer.conn || !peer.dc || peer.dc.readyState !== "open") continue;
-      const pos = this.valoria.avatar.avatar.position;
-      const rot = this.valoria.avatar.avatar.rotation;
-      const isMoving = this.valoria.avatar.avatar.move.forward !== 0 || this.valoria.avatar.avatar.move.left !== 0
+      const pos = this.valoria.avatar.model.position;
+      const rot = this.valoria.avatar.model.rotation;
+      const isMoving = this.valoria.avatar.model.move.forward !== 0 || this.valoria.avatar.model.move.left !== 0
       peer.dc.send(JSON.stringify({
         event: "Move",
         data: {

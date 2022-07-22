@@ -13,10 +13,13 @@ async function _import(urls){
     './modules/three.js', 
     './modules/three-gltf.js',
     "./modules/avatar.js",
+    "./modules/touch.js",
     "./modules/world.js",
     "./modules/events.js",
     "./modules/valoria.js",
   ]);
   valoria.load();
-  valoria.world.add("city", "/valoria/city.glb");
+  await valoria.avatar.set("http://localhost:3000/valoria/mimi.glb");
+  valoria.avatar.model.position.set(0, 0, 5);
+  await valoria.world.add("city", "/valoria/city.glb");
 })()
