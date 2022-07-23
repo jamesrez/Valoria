@@ -12,6 +12,7 @@ async function _import(urls){
   await _import([
     './modules/three.js', 
     './modules/three-gltf.js',
+    "./modules/tween.js",
     "./modules/avatar.js",
     "./modules/touch.js",
     "./modules/world.js",

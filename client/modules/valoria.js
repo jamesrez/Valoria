@@ -81,6 +81,7 @@ class Valoria {
 
     this.renderer.setAnimationLoop(async () => {
       this.renderer.render( this.scene, this.camera );
+      TWEEN.update();
       const delta = this.clock.getDelta();
       if(this.avatar.update) this.avatar.update(delta);
       if(this.touch && this.touch.update) this.touch.update(delta);

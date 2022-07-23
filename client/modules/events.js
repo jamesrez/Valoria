@@ -78,8 +78,8 @@ async function gotRTCDescription(ws, data){
     pc.ondatachannel = function(event) {
       self.peers[data.id].dc = event.channel;
       self.peers[data.id].dc.onopen = function(event) {
-        console.log("datachannel open")
-        console.log(self.peers[data.id]);
+        // console.log("datachannel open")
+        // console.log(self.peers[data.id]);
         if(world == self.world.name){
           self.world.addPlayer({id: data.id, avatar});
         }
@@ -95,6 +95,6 @@ async function gotRTCDescription(ws, data){
       }
     }
   } catch(e){
-    console.log(e)
+    // console.log(e)
   }
 }

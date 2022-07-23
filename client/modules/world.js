@@ -54,18 +54,16 @@ class World {
             avatar: this.valoria.avatar.url
           }
         }))
-        console.log("joining world")
         setInterval(() => {
           this.syncPlayers();
         }, 20);
       } catch(e){
-        console.log(e)
+        // console.log(e)
       }
     })
   }
 
   async addPlayer(p){
-    console.log(p);
     this.players[p.id] = await this.valoria.loadModel(p.avatar);
     this.players[p.id].position.set(0, 0, 5);
     this.players[p.id].move = { forward: 0, left: 0 }
@@ -75,6 +73,38 @@ class World {
     }
     this.valoria.updates[`player-${p.id}`] = (delta) => {
       if(this.players[p.id].mixer) this.players[p.id].mixer.update(delta)
+
+      // const realRot = this.players[p.id].rot;
+      // // console.log(realRot);
+      // if(realRot && realRot._y){
+      //   this.players[p.id].rotation.y = realRot._y
+      // }
+
+      // const realPos = this.players[p.id].pos;
+      // const pos = this.players[p.id].position;
+      // if(!realPos) return;
+      // if(realPos.x !== pos.x){
+      //   if(Math.abs(realPos.x - pos.x) <= 0.1){
+      //     pos.x = realPos.x
+      //   } else {
+      //     pos.x += realPos.x > pos.x ? 0.1 : -0.1
+      //   }
+      // }
+      // if(realPos.y !== pos.y){
+      //   if(Math.abs(realPos.y - pos.y) <= 0.1){
+      //     pos.y = realPos.y
+      //   } else {
+      //     pos.y += realPos.y > pos.y ? 0.1 : -0.1
+      //   }
+      // }
+      // if(realPos.z !== pos.z){
+      //   if(Math.abs(realPos.z - pos.z) <= 0.1){
+      //     pos.z = realPos.z
+      //   } else {
+      //     pos.z += realPos.z > pos.z ? 0.1 : -0.1
+      //   }
+      // }
+
     }
   }
 
@@ -106,10 +136,20 @@ class World {
   async updatePlayer(id, data){
     if(!this.players[id] || !data.pos || !data.rot) return;
     if(data.pos){
-      this.players[id].position.set(data.pos.x, data.pos.y, data.pos.z)
+      this.players[id].pos = new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z);
+      new TWEEN.Tween(this.players[id].position)
+        .to(
+            {
+                x: data.pos.x,
+                y: data.pos.y,
+                z: data.pos.z,
+            },
+            20
+        )
+        .start()
     }
     if(data.rot){
-      this.players[id].rotation.set(data.rot._x, data.rot._y, data.rot._z)
+      this.players[id].rotation.copy(new THREE.Euler(data.rot._x, data.rot._y, data.rot._z, data.rot._order));
     }
     if(data.isMoving){
       this.players[id].setAction("Run")
