@@ -44,6 +44,7 @@ async function gotRTCDescription(ws, data){
     const polite = data.polite;
     const world = data.world || "Valoria";
     const avatar = data.avatar || self.avatar.defaultUrl;
+    const metadata = data.metadata || {};
     const pc = self.peers[data.id].conn;
     const isStable =
       pc.signalingState == 'stable' ||
@@ -81,7 +82,7 @@ async function gotRTCDescription(ws, data){
         // console.log("datachannel open")
         // console.log(self.peers[data.id]);
         if(world == self.world.name){
-          self.world.addPlayer({id: data.id, avatar});
+          self.world.addPlayer({id: data.id, avatar, metadata});
         }
         // self.peers[data.id].dc.send('Hi back!');
       }

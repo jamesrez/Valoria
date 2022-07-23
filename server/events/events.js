@@ -296,7 +296,8 @@ module.exports = (valoria) => {
             id: ws.id,
             polite: self.conns[ws.id]?.peers[data.id]?.polite,
             world: ws.world,
-            avatar: ws.avatar
+            avatar: ws.avatar,
+            metadata: ws.metadata
           }
         }))
       } catch(e){

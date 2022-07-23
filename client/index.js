@@ -20,6 +20,7 @@ async function _import(urls){
     "./modules/valoria.js",
   ]);
   valoria.load();
+  valoria.avatar.setMetadata({name: "James", holding: true});
   await valoria.avatar.set("http://localhost:3000/valoria/mimi.glb");
   valoria.avatar.model.position.set(0, 0, 5);
   await valoria.world.add("city", "/valoria/city.glb");

@@ -17,6 +17,7 @@ module.exports = (valoria) => {
       }
       ws.world = data.world;
       ws.avatar = data.avatar;
+      ws.metadata = data.metadata;
       ws.send(JSON.stringify({
         event: "Joined world",
         data: {

@@ -9,7 +9,8 @@ class Avatar {
     this.loaded = false;
     this.position = {x: 0, y: 0, z: 0},
     this.rotation= {x: 0, y: 0, z: 0},
-    this.speed = 6
+    this.speed = 6;
+    this.metadata = {};
     this.target = new THREE.Vector3()
     this.spherical = new THREE.Spherical()
     this.sphericalDelta = new THREE.Spherical()

@@ -4981,7 +4981,8 @@ class Avatar {
     this.loaded = false;
     this.position = {x: 0, y: 0, z: 0},
     this.rotation= {x: 0, y: 0, z: 0},
-    this.speed = 6
+    this.speed = 6;
+    this.metadata = {};
     this.target = new THREE.Vector3()
     this.spherical = new THREE.Spherical()
     this.sphericalDelta = new THREE.Spherical()
@@ -5222,6 +5223,10 @@ class Avatar {
     if(e.code == "KeyD"){
       this.model.move["left"] = 0;
     }
+  }
+
+  setMetadata(data){
+    this.metadata = data;
   }
 
 }
@@ -15865,7 +15870,8 @@ class World {
           event: "Join world",
           data: {
             world: this.name,
-            avatar: this.valoria.avatar.url
+            avatar: this.valoria.avatar.url,
+            metadata: this.valoria.avatar.metadata
           }
         }))
         setInterval(() => {
@@ -15881,6 +15887,7 @@ class World {
     this.players[p.id] = await this.valoria.loadModel(p.avatar);
     this.players[p.id].position.set(0, 0, 5);
     this.players[p.id].move = { forward: 0, left: 0 }
+    this.players[p.id].metadata = p.metadata;
     this.players[p.id].setAction("Idle");
     this.valoria.peers[p.id].subscribed["Updates"] = (data) => {
       this.updatePlayer(p.id, data);
@@ -16010,6 +16017,7 @@ async function gotRTCDescription(ws, data){
     const polite = data.polite;
     const world = data.world || "Valoria";
     const avatar = data.avatar || self.avatar.defaultUrl;
+    const metadata = data.metadata || {};
     const pc = self.peers[data.id].conn;
     const isStable =
       pc.signalingState == 'stable' ||
@@ -16047,7 +16055,7 @@ async function gotRTCDescription(ws, data){
         // console.log("datachannel open")
         // console.log(self.peers[data.id]);
         if(world == self.world.name){
-          self.world.addPlayer({id: data.id, avatar});
+          self.world.addPlayer({id: data.id, avatar, metadata});
         }
         // self.peers[data.id].dc.send('Hi back!');
       }
