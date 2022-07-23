@@ -29,6 +29,7 @@ class Valoria {
   constructor(){
     this.THREE = THREE;
     this.THREE.Cache.enabled = true;
+    this.TWEEN = TWEEN;
     this.loader = new THREE.GLTFLoader();
     this.clock = new THREE.Clock();
     this.conns = {};
@@ -244,6 +245,7 @@ class Valoria {
         if(self.peers[id].subscribed[event]) self.peers[id].subscribed[event](d.data);
       }
       self.peers[id].dc.onclose = () => {
+        console.log("data channel closed");
         if(self.world.players[id]) self.world.removePlayer(id);
       }
 

@@ -2,6 +2,7 @@ const valoriaEvents = {
   "Joined world": joinedWorld,
   "Got ice candidate": gotIceCandidate,
   "Got rtc description": gotRTCDescription,
+  "Peer has left world": peerHasLeftWorld
 }
 
 async function joinedWorld(ws, data){
@@ -97,4 +98,9 @@ async function gotRTCDescription(ws, data){
   } catch(e){
     // console.log(e)
   }
+}
+
+async function peerHasLeftWorld(ws, data){
+  const self = ws.valoria;
+  if(self.world.name == data.world && self.world.players[data.id]) self.world.removePlayer(data.id);
 }

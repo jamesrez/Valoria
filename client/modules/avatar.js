@@ -176,22 +176,29 @@ class Avatar {
       position.copy(this.target).add(offset)
     }
     
-    let isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0
-    if (this.model.jump) {
-      this.model.setAction("Jump")
-    } else if (!this.model.jump) {
-      if (isMoving) {
-        this.model.setAction("Run")
+    this.isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0;
+    if (this.model.dying){
+      this.model.setAction("Death");
+    } else {
+      if(this.model.punching){
+        this.model.setAction("Punch");
+      }
+      if (this.model.jumping) {
+        this.model.setAction("Jump")
       } else {
-        if (this.model.dancing) {
+        if (this.isMoving && !this.model.punching) {
+          this.model.setAction("Run")
+          this.model.dancing = false;
+        } else if(this.model.dancing){
           this.model.setAction("Dance")
-        } else {
-          this.model.setAction("Idle")
         }
+      }
+      if(!this.model.punching && !this.model.jumping && !this.isMoving && !this.model.dancing){
+        this.model.setAction("Idle");
       }
     }
 
-    let velocity = isMoving ? 1 : 0
+    let velocity = this.isMoving ? 1 : 0
     this.model.translateZ(velocity * this.speed * delta)
     this.model.lastMove = Object.assign({}, this.model.move)
 
@@ -221,6 +228,12 @@ class Avatar {
     }
     if(e.code == "KeyD"){
       this.model.move["left"] = -1;
+    }
+    if (e.code === 'Space' && !this.model.jumping) {
+      this.model.jumping = true;
+      setTimeout(() => {
+          this.model.jumping = false;
+      }, 600)
     }
   }
 

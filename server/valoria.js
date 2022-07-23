@@ -209,8 +209,21 @@ class Valoria {
         delete self.conns[ws.id];
         if(ws.world && self.worlds[ws.world]?.peers[ws.id]){
           delete self.worlds[ws.world]?.peers[ws.id];
-          if(Object.keys(self.worlds[ws.world].peers).length == 0){
+          const peerList = Object.keys(self.worlds[ws.world].peers)
+          if(peerList.length == 0){
             delete self.worlds[ws.world];
+          } else {
+            for (let i=0;i<peerList.length;i++){
+              if(self.conns[peerList[i]]){
+                self.conns[peerList[i]].send(JSON.stringify({
+                  event: "Peer has left world",
+                  data: {
+                    id: ws.id,
+                    world: ws.world
+                  }
+                }))
+              }
+            }
           }
         }
       })

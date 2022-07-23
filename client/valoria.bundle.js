@@ -5148,22 +5148,29 @@ class Avatar {
       position.copy(this.target).add(offset)
     }
     
-    let isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0
-    if (this.model.jump) {
-      this.model.setAction("Jump")
-    } else if (!this.model.jump) {
-      if (isMoving) {
-        this.model.setAction("Run")
+    this.isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0;
+    if (this.model.dying){
+      this.model.setAction("Death");
+    } else {
+      if(this.model.punching){
+        this.model.setAction("Punch");
+      }
+      if (this.model.jumping) {
+        this.model.setAction("Jump")
       } else {
-        if (this.model.dancing) {
+        if (this.isMoving && !this.model.punching) {
+          this.model.setAction("Run")
+          this.model.dancing = false;
+        } else if(this.model.dancing){
           this.model.setAction("Dance")
-        } else {
-          this.model.setAction("Idle")
         }
+      }
+      if(!this.model.punching && !this.model.jumping && !this.isMoving && !this.model.dancing){
+        this.model.setAction("Idle");
       }
     }
 
-    let velocity = isMoving ? 1 : 0
+    let velocity = this.isMoving ? 1 : 0
     this.model.translateZ(velocity * this.speed * delta)
     this.model.lastMove = Object.assign({}, this.model.move)
 
@@ -5193,6 +5200,12 @@ class Avatar {
     }
     if(e.code == "KeyD"){
       this.model.move["left"] = -1;
+    }
+    if (e.code === 'Space' && !this.model.jumping) {
+      this.model.jumping = true;
+      setTimeout(() => {
+          this.model.jumping = false;
+      }, 600)
     }
   }
 
@@ -15923,11 +15936,15 @@ class World {
       if(!peer || !peer.conn || !peer.dc || peer.dc.readyState !== "open") continue;
       const pos = this.valoria.avatar.model.position;
       const rot = this.valoria.avatar.model.rotation;
-      const isMoving = this.valoria.avatar.model.move.forward !== 0 || this.valoria.avatar.model.move.left !== 0
+      const moving = this.valoria.avatar.isMoving;
+      const dancing = this.valoria.avatar.model.dancing;
+      const dying = this.valoria.avatar.model.dying;
+      const punching = this.valoria.avatar.model.punching;
+      const jumping = this.valoria.avatar.model.jumping;
       peer.dc.send(JSON.stringify({
         event: "Updates",
         data: {
-          pos, rot, isMoving
+          pos, rot, moving, dancing, dying, punching, jumping
         }
       }))
     }
@@ -15935,7 +15952,7 @@ class World {
   }
 
   async updatePlayer(id, data){
-    if(!this.players[id] || !data.pos || !data.rot) return;
+    if(!this.players[id]) return;
     if(data.pos){
       this.players[id].pos = new THREE.Vector3(data.pos.x, data.pos.y, data.pos.z);
       new TWEEN.Tween(this.players[id].position)
@@ -15952,10 +15969,25 @@ class World {
     if(data.rot){
       this.players[id].rotation.copy(new THREE.Euler(data.rot._x, data.rot._y, data.rot._z, data.rot._order));
     }
-    if(data.isMoving){
-      this.players[id].setAction("Run")
+    
+    if (data.dying){
+      this.players[id].setAction("Death");
     } else {
-      this.players[id].setAction("Idle")
+      if(data.punching){
+        this.players[id].setAction("Punch");
+      }
+      if (data.jumping) {
+        this.players[id].setAction("Jump")
+      } else {
+        if (data.moving && !data.punching) {
+          this.players[id].setAction("Run")
+        } else if(data.dancing){
+          this.players[id].setAction("Dance")
+        }
+      }
+      if(!data.punching && !data.jumping && !data.moving && !data.dancing){
+        this.players[id].setAction("Idle");
+      }
     }
 
   }
@@ -15967,6 +15999,7 @@ const valoriaEvents = {
   "Joined world": joinedWorld,
   "Got ice candidate": gotIceCandidate,
   "Got rtc description": gotRTCDescription,
+  "Peer has left world": peerHasLeftWorld
 }
 
 async function joinedWorld(ws, data){
@@ -16063,6 +16096,11 @@ async function gotRTCDescription(ws, data){
     // console.log(e)
   }
 }
+
+async function peerHasLeftWorld(ws, data){
+  const self = ws.valoria;
+  if(self.world.name == data.world && self.world.players[data.id]) self.world.removePlayer(data.id);
+}
 const iceServers = [
   {url: "stun:stun.l.google.com:19302", urls: "stun:stun.l.google.com:19302"},
   {url: "stun:stun2.l.google.com:19302", urls: "stun:stun2.l.google.com:19302"},
@@ -16094,6 +16132,7 @@ class Valoria {
   constructor(){
     this.THREE = THREE;
     this.THREE.Cache.enabled = true;
+    this.TWEEN = TWEEN;
     this.loader = new THREE.GLTFLoader();
     this.clock = new THREE.Clock();
     this.conns = {};
@@ -16309,6 +16348,7 @@ class Valoria {
         if(self.peers[id].subscribed[event]) self.peers[id].subscribed[event](d.data);
       }
       self.peers[id].dc.onclose = () => {
+        console.log("data channel closed");
         if(self.world.players[id]) self.world.removePlayer(id);
       }
 
@@ -16334,4 +16374,4 @@ class Valoria {
 
 
 let valoria = new Valoria();
-export default valoria;
+export defualt valoria;
