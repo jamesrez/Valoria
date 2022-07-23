@@ -13,7 +13,7 @@ module.exports = (valoria) => {
         peers: {},
       };
       if(!self.worlds[data.world].peers[ws.id]){
-        self.worlds[data.world].peers[ws.id] = {avatar: data.avatar, id: ws.id};
+        self.worlds[data.world].peers[ws.id] = {avatar: data.avatar, id: ws.id, metadata: data.metadata};
       }
       ws.world = data.world;
       ws.avatar = data.avatar;

@@ -252,5 +252,9 @@ class Avatar {
     }
   }
 
+  setMetadata(data){
+    this.metadata = data;
+  }
+
 }
 

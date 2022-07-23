@@ -1,6 +1,6 @@
 {
   "name": "valoria",
-  "version": "3.3.2",
+  "version": "3.3.4",
   "description": "Protocol for the Metaverse",
   "main": "valoria.bundle.js",
   "scripts": {

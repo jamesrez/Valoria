@@ -12,7 +12,6 @@ async function joinedWorld(ws, data){
     try {
       await self.p2pConnect(peerList[i]);
       await self.world.addPlayer(data.peers[peerList[i]]);
-      self.world.onNewPlayer(self.world.players[peerList[i]]);
     } catch(e){
       // console.log(e)
     }

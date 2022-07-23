@@ -15887,39 +15887,8 @@ class World {
     }
     this.valoria.updates[`player-${p.id}`] = (delta) => {
       if(this.players[p.id].mixer) this.players[p.id].mixer.update(delta)
-
-      // const realRot = this.players[p.id].rot;
-      // // console.log(realRot);
-      // if(realRot && realRot._y){
-      //   this.players[p.id].rotation.y = realRot._y
-      // }
-
-      // const realPos = this.players[p.id].pos;
-      // const pos = this.players[p.id].position;
-      // if(!realPos) return;
-      // if(realPos.x !== pos.x){
-      //   if(Math.abs(realPos.x - pos.x) <= 0.1){
-      //     pos.x = realPos.x
-      //   } else {
-      //     pos.x += realPos.x > pos.x ? 0.1 : -0.1
-      //   }
-      // }
-      // if(realPos.y !== pos.y){
-      //   if(Math.abs(realPos.y - pos.y) <= 0.1){
-      //     pos.y = realPos.y
-      //   } else {
-      //     pos.y += realPos.y > pos.y ? 0.1 : -0.1
-      //   }
-      // }
-      // if(realPos.z !== pos.z){
-      //   if(Math.abs(realPos.z - pos.z) <= 0.1){
-      //     pos.z = realPos.z
-      //   } else {
-      //     pos.z += realPos.z > pos.z ? 0.1 : -0.1
-      //   }
-      // }
-
     }
+    this.onNewPlayer(this.players[p.id]);
   }
 
   async removePlayer(id){
@@ -15962,7 +15931,7 @@ class World {
                 y: data.pos.y,
                 z: data.pos.z,
             },
-            20
+            30
         )
         .start()
     }
@@ -16009,7 +15978,6 @@ async function joinedWorld(ws, data){
     try {
       await self.p2pConnect(peerList[i]);
       await self.world.addPlayer(data.peers[peerList[i]]);
-      self.world.onNewPlayer(self.world.players[peerList[i]]);
     } catch(e){
       // console.log(e)
     }
@@ -16348,7 +16316,6 @@ class Valoria {
         if(self.peers[id].subscribed[event]) self.peers[id].subscribed[event](d.data);
       }
       self.peers[id].dc.onclose = () => {
-        console.log("data channel closed");
         if(self.world.players[id]) self.world.removePlayer(id);
       }
 
@@ -16374,4 +16341,4 @@ class Valoria {
 
 
 let valoria = new Valoria();
-export defualt valoria;
+export default valoria;

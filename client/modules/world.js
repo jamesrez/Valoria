@@ -51,7 +51,8 @@ class World {
           event: "Join world",
           data: {
             world: this.name,
-            avatar: this.valoria.avatar.url
+            avatar: this.valoria.avatar.url,
+            metadata: this.valoria.avatar.metadata
           }
         }))
         setInterval(() => {
@@ -67,45 +68,15 @@ class World {
     this.players[p.id] = await this.valoria.loadModel(p.avatar);
     this.players[p.id].position.set(0, 0, 5);
     this.players[p.id].move = { forward: 0, left: 0 }
+    this.players[p.id].metadata = p.metadata;
     this.players[p.id].setAction("Idle");
     this.valoria.peers[p.id].subscribed["Updates"] = (data) => {
       this.updatePlayer(p.id, data);
     }
     this.valoria.updates[`player-${p.id}`] = (delta) => {
       if(this.players[p.id].mixer) this.players[p.id].mixer.update(delta)
-
-      // const realRot = this.players[p.id].rot;
-      // // console.log(realRot);
-      // if(realRot && realRot._y){
-      //   this.players[p.id].rotation.y = realRot._y
-      // }
-
-      // const realPos = this.players[p.id].pos;
-      // const pos = this.players[p.id].position;
-      // if(!realPos) return;
-      // if(realPos.x !== pos.x){
-      //   if(Math.abs(realPos.x - pos.x) <= 0.1){
-      //     pos.x = realPos.x
-      //   } else {
-      //     pos.x += realPos.x > pos.x ? 0.1 : -0.1
-      //   }
-      // }
-      // if(realPos.y !== pos.y){
-      //   if(Math.abs(realPos.y - pos.y) <= 0.1){
-      //     pos.y = realPos.y
-      //   } else {
-      //     pos.y += realPos.y > pos.y ? 0.1 : -0.1
-      //   }
-      // }
-      // if(realPos.z !== pos.z){
-      //   if(Math.abs(realPos.z - pos.z) <= 0.1){
-      //     pos.z = realPos.z
-      //   } else {
-      //     pos.z += realPos.z > pos.z ? 0.1 : -0.1
-      //   }
-      // }
-
     }
+    this.onNewPlayer(this.players[p.id]);
   }
 
   async removePlayer(id){
@@ -148,7 +119,7 @@ class World {
                 y: data.pos.y,
                 z: data.pos.z,
             },
-            20
+            30
         )
         .start()
     }
