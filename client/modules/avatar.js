@@ -127,6 +127,7 @@ class Avatar {
 
   update (delta) {
     if(!this.loaded || !this.enabled) return;
+    this.lastPos = new THREE.Vector3().copy(this.model.position);
     if(this.model.mixer) this.model.mixer.update(delta);
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.model.move.left * 10,

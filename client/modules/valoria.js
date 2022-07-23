@@ -39,11 +39,11 @@ class Valoria {
        (/Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.platform))) {
         this.isMobile = true;
     }
-    if(window.location.hostname == "localhost"){
-      this.mainUrl = window.location.href;
-    } else {
+    // if(window.location.hostname == "localhost"){
+    //   this.mainUrl = window.location.href;
+    // } else {
       this.mainUrl = "https://www.valoria.net/"
-    }
+    // }
     this.events = valoriaEvents;
   }
 

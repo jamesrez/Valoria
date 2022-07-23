@@ -12,16 +12,16 @@ module.exports = (valoria) => {
       if(!self.worlds[data.world]) self.worlds[data.world] = {
         peers: {},
       };
-      const peerList = Object.keys(self.worlds[data.world].peers);
       if(!self.worlds[data.world].peers[ws.id]){
-        self.worlds[data.world].peers[ws.id] = {avatar: data.avatar};
+        self.worlds[data.world].peers[ws.id] = {avatar: data.avatar, id: ws.id};
       }
       ws.world = data.world;
+      ws.avatar = data.avatar;
       ws.send(JSON.stringify({
         event: "Joined world",
         data: {
           world: data.world,
-          peers: peerList
+          peers: self.worlds[data.world].peers
         }
       }))
     })

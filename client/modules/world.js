@@ -8,6 +8,7 @@ class World {
     // this.map[`${this.valoria.mainUrl}valoria/city.glb`] = { pos: {x: 0, y: 0, z: 0}, rot: {x: 0, y: 0, z: 0} };
     // this.playerModel = `${this.valoria.mainUrl}valoria/sophia.glb`;
     this.players = {};
+    this.onNewPlayer = (p) => {};
   }
 
   async add(name, url, opts={}){
@@ -53,25 +54,27 @@ class World {
             avatar: this.valoria.avatar.url
           }
         }))
+        console.log("joining world")
         setInterval(() => {
           this.syncPlayers();
         }, 20);
       } catch(e){
-  
+        console.log(e)
       }
     })
   }
 
-  async addPlayer(id){
-    this.players[id] = await this.valoria.loadModel(this.playerModel);
-    this.players[id].position.set(0, 0, 5);
-    this.players[id].move = { forward: 0, left: 0 }
-    this.players[id].setAction("Idle");
-    this.valoria.peers[id].subscribed["Move"] = (data) => {
-      this.updatePlayer(id, data);
+  async addPlayer(p){
+    console.log(p);
+    this.players[p.id] = await this.valoria.loadModel(p.avatar);
+    this.players[p.id].position.set(0, 0, 5);
+    this.players[p.id].move = { forward: 0, left: 0 }
+    this.players[p.id].setAction("Idle");
+    this.valoria.peers[p.id].subscribed["Updates"] = (data) => {
+      this.updatePlayer(p.id, data);
     }
-    this.valoria.updates[`player-${id}`] = (delta) => {
-      if(this.players[id].mixer) this.players[id].mixer.update(delta)
+    this.valoria.updates[`player-${p.id}`] = (delta) => {
+      if(this.players[p.id].mixer) this.players[p.id].mixer.update(delta)
     }
   }
 
@@ -91,7 +94,7 @@ class World {
       const rot = this.valoria.avatar.model.rotation;
       const isMoving = this.valoria.avatar.model.move.forward !== 0 || this.valoria.avatar.model.move.left !== 0
       peer.dc.send(JSON.stringify({
-        event: "Move",
+        event: "Updates",
         data: {
           pos, rot, isMoving
         }

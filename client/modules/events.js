@@ -1,17 +1,19 @@
 const valoriaEvents = {
-  "Joined dimension": joinedDimension,
+  "Joined world": joinedWorld,
   "Got ice candidate": gotIceCandidate,
   "Got rtc description": gotRTCDescription,
 }
 
-async function joinedDimension(ws, data){
+async function joinedWorld(ws, data){
   const self = ws.valoria;
-  for(let i=0;i<data.peers.length;i++){
+  const peerList = Object.keys(data.peers);
+  for(let i=0;i<peerList.length;i++){
     try {
-      await self.p2pConnect(data.peers[i]);
-      await self.dimension.addPlayer(data.peers[i]);
+      await self.p2pConnect(peerList[i]);
+      await self.world.addPlayer(data.peers[peerList[i]]);
+      self.world.onNewPlayer(self.world.players[peerList[i]]);
     } catch(e){
-      console.log(e)
+      // console.log(e)
     }
   }
 }
@@ -40,7 +42,8 @@ async function gotRTCDescription(ws, data){
     }
     const description = data.description;
     const polite = data.polite;
-    const dimension = data.dimension || "Valoria";
+    const world = data.world || "Valoria";
+    const avatar = data.avatar || self.avatar.defaultUrl;
     const pc = self.peers[data.id].conn;
     const isStable =
       pc.signalingState == 'stable' ||
@@ -77,8 +80,8 @@ async function gotRTCDescription(ws, data){
       self.peers[data.id].dc.onopen = function(event) {
         console.log("datachannel open")
         console.log(self.peers[data.id]);
-        if(dimension == self.dimension.name){
-          self.dimension.addPlayer(data.id);
+        if(world == self.world.name){
+          self.world.addPlayer({id: data.id, avatar});
         }
         // self.peers[data.id].dc.send('Hi back!');
       }
@@ -88,7 +91,7 @@ async function gotRTCDescription(ws, data){
         if(self.peers[data.id].subscribed[event]) self.peers[data.id].subscribed[event](d.data);
       }
       self.peers[data.id].dc.onclose = () => {
-        if(self.dimension.players[data.id]) self.dimension.removePlayer(data.id);
+        if(self.world.players[data.id]) self.world.removePlayer(data.id);
       }
     }
   } catch(e){
