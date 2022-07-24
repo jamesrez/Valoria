@@ -26,9 +26,16 @@ class Avatar {
     }
     this.enabled = true;
     const self = this;
+
     document.onpointerlockchange = (event) => {
-      if (!document.pointerLockElement) self.ranOnce = false
+      if (document.pointerLockElement) {
+          this.enabled = true
+      } else {
+          this.enabled = false
+          this.ranOnce = false
+      }
     }
+
     document.addEventListener('keydown', (e) => this.handleKeyDown(e));
     document.addEventListener('keyup', (e) => this.handleKeyUp(e));
   }
@@ -127,9 +134,9 @@ class Avatar {
   }
 
   update (delta) {
+    if(this.model && this.model.mixer) this.model.mixer.update(delta);
     if(!this.loaded || !this.enabled) return;
     this.lastPos = new THREE.Vector3().copy(this.model.position);
-    if(this.model.mixer) this.model.mixer.update(delta);
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.model.move.left * 10,
       this.camera.position.y,

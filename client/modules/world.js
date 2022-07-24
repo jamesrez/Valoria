@@ -17,7 +17,7 @@ class World {
         if(this.models[name]){
           throw `${name} has already been added to the world`;
         }
-        const model = await this.valoria.loadModel(url);
+        const model = await this.valoria.loadModel(url, {castShadow: opts.castShadow, receiveShadow: opts.receiveShadow});
         this.models[name] = model;
         if(opts.pos){
           model.position.set(opts.pos.x || 0, opts.pos.y || 0, opts.pos.z || 0);

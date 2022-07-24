@@ -112,6 +112,8 @@ class Valoria {
         })
       }
 
+      this.vr = new VR(this);
+
       this.world.join();
       this.avatar.enabled = true;
     }
@@ -134,13 +136,15 @@ class Valoria {
     }
   }
 
-  async loadModel(url, opts={}){
+  async loadModel(url, opts={castShadow: true}){
     return new Promise(async (res, rej) => {
       this.loader.load(url, (gltf) => {
         this.scene.add(gltf.scene);
         gltf.scene.traverse((node) => {
           if(node.isMesh){
             node.frustumCulled = false;
+            node.castShadow = opts.castShadow;
+            node.receiveShadow = opts.receiveShadow || false;
             node.material.roughness = 1;
           }
         })
