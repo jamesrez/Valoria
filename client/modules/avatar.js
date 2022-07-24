@@ -159,60 +159,64 @@ class Avatar {
         }
       }
     } 
-    if(!this.enabled || this.valoria.vr.session) return;
-    this.lastPos = new THREE.Vector3().copy(this.model.position);
-    this.camera.dirTarget.position.set(
-      this.camera.position.x + this.model.move.left * 10,
-      this.camera.position.y,
-      this.camera.position.z + this.model.move.forward * 20 - 2
-    )
-    var viewPos = this.camera.dirTarget.position
-    var newView = new THREE.Vector3()
-    newView.copy(viewPos)
-    let pos = this.camera.dirTarget.getWorldPosition(newView)
-    if (
-      (this.model.move.forward !== 0 || this.model.move.left !== 0) &&
-      (JSON.stringify(this.model.lastMove) !== JSON.stringify(this.model.move) ||
-      JSON.stringify(this.camera.lastPosition) !== JSON.stringify(this.camera.position))
-    ) {
-      if(this.camera.parent && this.camera.parent.parent){
-        this.camera.parent.parent.attach(this.camera)
-      }
-      this.model.lookAt(
-          this.model.position.x - (pos.x - this.model.position.x),
-          this.model.position.y,
-          this.model.position.z - (pos.z - this.model.position.z)
-      )
-      this.model.attach(this.camera)
-    }
+    if(!this.enabled) return;
 
-    if(!this.isMobile){
-      const offset = new THREE.Vector3() // so camera.up is the orbit axis
-      const quat = new THREE.Quaternion().setFromUnitVectors(
-          this.camera.up,
-          new THREE.Vector3(0, 1, 0)
+    if(!this.valoria.vr.session){
+      this.lastPos = new THREE.Vector3().copy(this.model.position);
+      this.camera.dirTarget.position.set(
+        this.camera.position.x + this.model.move.left * 10,
+        this.camera.position.y,
+        this.camera.position.z + this.model.move.forward * 20 - 2
       )
-      const quatInverse = quat.clone().invert()
-      const position = this.camera.position
-      offset.copy(position).sub(this.target) // rotate offset to "y-axis-is-up" space
-      offset.applyQuaternion(quat) // angle from z-axis around y-axis
-      this.spherical.setFromVector3(offset)
-      this.spherical.theta += this.sphericalDelta.theta
-      this.spherical.phi += this.sphericalDelta.phi
-      this.spherical.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, this.spherical.phi)) // restrict phi to be between desired limits
-      this.spherical.makeSafe()
-      this.spherical.radius *= 1 // restrict radius to be between desired limits
-      this.spherical.radius = Math.max(0, Math.min(Infinity, this.spherical.radius)) // move target to panned location
-      offset.setFromSpherical(this.spherical) // rotate offset back to "camera-up-vector-is-up" space
-      offset.applyQuaternion(quatInverse)
-      position.copy(this.target).add(offset)
-    }
+      var viewPos = this.camera.dirTarget.position
+      var newView = new THREE.Vector3()
+      newView.copy(viewPos)
+      let pos = this.camera.dirTarget.getWorldPosition(newView)
+      if (
+        (this.model.move.forward !== 0 || this.model.move.left !== 0) &&
+        (JSON.stringify(this.model.lastMove) !== JSON.stringify(this.model.move) ||
+        JSON.stringify(this.camera.lastPosition) !== JSON.stringify(this.camera.position))
+      ) {
+        if(this.camera.parent && this.camera.parent.parent){
+          this.camera.parent.parent.attach(this.camera)
+        }
+        this.model.lookAt(
+            this.model.position.x - (pos.x - this.model.position.x),
+            this.model.position.y,
+            this.model.position.z - (pos.z - this.model.position.z)
+        )
+        this.model.attach(this.camera)
+      }
+
+      if(!this.isMobile){
+        const offset = new THREE.Vector3() // so camera.up is the orbit axis
+        const quat = new THREE.Quaternion().setFromUnitVectors(
+            this.camera.up,
+            new THREE.Vector3(0, 1, 0)
+        )
+        const quatInverse = quat.clone().invert()
+        const position = this.camera.position
+        offset.copy(position).sub(this.target) // rotate offset to "y-axis-is-up" space
+        offset.applyQuaternion(quat) // angle from z-axis around y-axis
+        this.spherical.setFromVector3(offset)
+        this.spherical.theta += this.sphericalDelta.theta
+        this.spherical.phi += this.sphericalDelta.phi
+        this.spherical.phi = Math.max(0.2, Math.min(Math.PI / 2 - 0.05, this.spherical.phi)) // restrict phi to be between desired limits
+        this.spherical.makeSafe()
+        this.spherical.radius *= 1 // restrict radius to be between desired limits
+        this.spherical.radius = Math.max(0, Math.min(Infinity, this.spherical.radius)) // move target to panned location
+        offset.setFromSpherical(this.spherical) // rotate offset back to "camera-up-vector-is-up" space
+        offset.applyQuaternion(quatInverse)
+        position.copy(this.target).add(offset)
+      }
+
+    }    
 
     let velocity = this.isMoving ? 1 : 0
     this.model.translateZ(velocity * this.speed * delta)
     this.model.lastMove = Object.assign({}, this.model.move)
 
-    if(!this.isMobile){
+    if(!this.isMobile && !this.valoria.vr.session){
       this.sphericalDelta.set(0, 0, 0)
       this.camera.lookAt(
         this.model.position.x,
