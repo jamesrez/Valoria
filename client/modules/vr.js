@@ -195,6 +195,7 @@ class VR {
       this.session = this.valoria.renderer.xr.getSession()
       if (!this.session) return
       this.valoria.avatar.model.visible = false;
+      this.valoria.scene.attach(this.valoria.camera);
       for (let source of this.session.inputSources) {
         if (!source || !source.gamepad || !source.handedness) continue
         if(source.handedness == "left"){

@@ -134,8 +134,32 @@ class Avatar {
   }
 
   update (delta) {
-    if(this.model && this.model.mixer) this.model.mixer.update(delta);
-    if(!this.loaded || !this.enabled) return;
+    if(!this.loaded) return;
+    if(this.model && this.model.mixer){
+      this.model.mixer.update(delta);
+      this.isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0;
+      if (this.model.dying){
+        this.model.setAction("Death");
+      } else {
+        if(this.model.punching){
+          this.model.setAction("Punch");
+        }
+        if (this.model.jumping) {
+          this.model.setAction("Jump")
+        } else {
+          if (this.isMoving && !this.model.punching) {
+            this.model.setAction("Run")
+            this.model.dancing = false;
+          } else if(this.model.dancing){
+            this.model.setAction("Dance")
+          }
+        }
+        if(!this.model.punching && !this.model.jumping && !this.isMoving && !this.model.dancing){
+          this.model.setAction("Idle");
+        }
+      }
+    } 
+    if(!this.enabled || this.valoria.vr.session) return;
     this.lastPos = new THREE.Vector3().copy(this.model.position);
     this.camera.dirTarget.position.set(
       this.camera.position.x + this.model.move.left * 10,
@@ -182,28 +206,6 @@ class Avatar {
       offset.setFromSpherical(this.spherical) // rotate offset back to "camera-up-vector-is-up" space
       offset.applyQuaternion(quatInverse)
       position.copy(this.target).add(offset)
-    }
-    
-    this.isMoving = this.model.move.forward !== 0 || this.model.move.left !== 0;
-    if (this.model.dying){
-      this.model.setAction("Death");
-    } else {
-      if(this.model.punching){
-        this.model.setAction("Punch");
-      }
-      if (this.model.jumping) {
-        this.model.setAction("Jump")
-      } else {
-        if (this.isMoving && !this.model.punching) {
-          this.model.setAction("Run")
-          this.model.dancing = false;
-        } else if(this.model.dancing){
-          this.model.setAction("Dance")
-        }
-      }
-      if(!this.model.punching && !this.model.jumping && !this.isMoving && !this.model.dancing){
-        this.model.setAction("Idle");
-      }
     }
 
     let velocity = this.isMoving ? 1 : 0
