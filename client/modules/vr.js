@@ -204,7 +204,7 @@ class VR {
         }
         let axes = source.gamepad.axes.slice(0)
         axes.forEach((value, i) => {
-          if (Math.abs(value) > 0.2) {
+          if (Math.abs(value) > 0.4) {
             if (i == 2) {
               if (source.handedness == 'left') {
                 if (axes[i] < 0) {
