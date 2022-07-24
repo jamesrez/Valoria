@@ -211,12 +211,14 @@ class VR {
                   this.valoria.avatar.model.move['left'] = 1
                 } else if (axes[i] > 0) {
                   this.valoria.avatar.model.move['left'] = -1
+                } else {
+                  this.valoria.avatar.model.move['left'] = 0
                 }
               } else {
                 if (axes[i] < 0) {
-                  this.valoria.avatar.model.rotation.y += 0.03
+                  this.valoria.avatar.model.rotation.y += 0.04
                 } else if (axes[i] > 0) {
-                  this.valoria.avatar.model.rotation.y -= 0.03
+                  this.valoria.avatar.model.rotation.y -= 0.04
                 }
               }
             }
@@ -226,6 +228,8 @@ class VR {
                       this.valoria.avatar.model.move['forward'] = 1
                     } else if (axes[i] > 0) {
                       this.valoria.avatar.model.move['forward'] = -1
+                    } else {
+                      this.valoria.avatar.model.move['forward'] = 0
                     }
                 } else {
                 }
