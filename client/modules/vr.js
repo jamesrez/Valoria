@@ -124,7 +124,7 @@ class VRButton {
 
         if ('xr' in navigator) {
             button.id = 'VRButton'
-            button.style.display = 'none'
+            button.style.display = 'block';
 
             stylizeElement(button)
 
@@ -189,7 +189,8 @@ class VR {
   }
 
   setup () {
-    VRButton.createButton(this.valoria.renderer);
+    this.button = VRButton.createButton(this.valoria.renderer);
+    this.valoria.el.append(this.button)
     this.valoria.update("Valoria VR", (delta) => {
       this.session = this.valoria.renderer.xr.getSession()
       if (!this.session) return
