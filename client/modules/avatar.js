@@ -65,7 +65,7 @@ class Avatar {
   async setDefault(){
     const self = this;
     return new Promise(async (res, rej) => {
-      if(self.url == self.defaultUrl) return res(self.model);
+      if(self.url == self.defaultUrl && self.loaded) return res(self.model);
       try {
         if(self.model) {
           self.camera.parent.parent.attach(self.camera)
